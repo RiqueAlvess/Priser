@@ -1,0 +1,78 @@
+@model Priser.Models.ViewModels.LoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Login – Priser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .ms { font-family:'Material Symbols Outlined'; font-style:normal; font-size:20px; line-height:1; vertical-align:middle; }
+    </style>
+</head>
+<body class="min-h-screen flex" style="background:#0b1b3d">
+    <div class="hidden lg:flex lg:w-1/2 flex-col justify-between p-12" style="background:#00020a">
+        <div class="text-3xl font-black text-white flex items-center gap-3">
+            <span class="ms text-[40px]" style="color:#00658d">award_star</span>
+            Priser
+        </div>
+        <div>
+            <h1 class="text-5xl font-black text-white leading-tight mb-6">
+                Reconheça.<br/>Celebre.<br/>Engaje.
+            </h1>
+            <p class="text-lg opacity-60 text-white">A plataforma de reconhecimento que transforma cultura corporativa em resultados reais.</p>
+        </div>
+        <p class="text-xs opacity-30 text-white">© @DateTime.Now.Year Priser · Todos os direitos reservados</p>
+    </div>
+
+    <div class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl">
+            <div class="lg:hidden text-2xl font-black flex items-center gap-2 mb-8" style="color:#00658d">
+                <span class="ms text-[32px]">award_star</span> Priser
+            </div>
+            <h2 class="text-2xl font-bold mb-2" style="color:#0b1b3d">Entrar na sua conta</h2>
+            <p class="text-sm text-gray-500 mb-8">Acesse sua plataforma de reconhecimento</p>
+
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <p>@error.ErrorMessage</p>
+                    }
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl"/>
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold mb-2" style="color:#0b1b3d">Email</label>
+                    <input asp-for="Email" type="email" autocomplete="email" required
+                           class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                           placeholder="seu@email.com"/>
+                </div>
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold mb-2" style="color:#0b1b3d">Senha</label>
+                    <input asp-for="Password" type="password" autocomplete="current-password" required
+                           class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                           placeholder="••••••••"/>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl font-bold text-white transition-colors" style="background:#00658d">
+                    Entrar
+                </button>
+            </form>
+            <p class="text-center text-sm text-gray-500 mt-6">
+                Novo na plataforma?
+                <a href="/auth/register" class="font-semibold hover:underline" style="color:#00658d">Criar conta</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

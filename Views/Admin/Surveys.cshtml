@@ -1,0 +1,99 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Pesquisas – Admin";
+    var surveys = ViewBag.Surveys as List<Survey> ?? [];
+}
+
+<header class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-primary-container">Gerenciar Pesquisas</h1>
+        <a href="/admin" class="text-secondary text-sm hover:underline">← Admin</a>
+    </div>
+    <button onclick="document.getElementById('survey-modal').classList.remove('hidden')" class="btn-primary flex items-center gap-2">
+        <span class="ms" style="font-size:16px;font-family:'Material Symbols Outlined';font-style:normal">add</span> Nova Pesquisa
+    </button>
+</header>
+
+<div class="space-y-4">
+    @foreach (var s in surveys)
+    {
+        var typeColor = s.SurveyType switch {
+            "enps" => "bg-purple-100 text-purple-800",
+            "pulse" => "bg-blue-100 text-blue-800",
+            "esat" => "bg-green-100 text-green-800",
+            _ => "bg-surface-container text-on-surface-variant"
+        };
+        <div class="card p-5 flex flex-wrap items-center gap-4">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold @typeColor">@s.SurveyType.ToUpper()</span>
+                    @if (s.IsAnonymous) {
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">Anônima</span>
+                    }
+                    <span class="text-xs px-2 py-0.5 rounded-full @(s.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">@(s.IsActive ? "Ativa" : "Inativa")</span>
+                </div>
+                <p class="font-bold text-primary-container">@s.Title</p>
+                <p class="text-xs text-on-surface-variant mt-0.5">@s.Questions.Count perguntas · @s.Responses.Count respostas @(s.RewardPoints > 0 ? $"· +{s.RewardPoints} pts" : "")</p>
+                @if (s.EndsAt.HasValue)
+                {
+                    <p class="text-xs text-on-surface-variant">Expira: @s.EndsAt.Value.ToString("dd/MM/yyyy")</p>
+                }
+            </div>
+        </div>
+    }
+    @if (!surveys.Any())
+    {
+        <div class="card p-12 text-center">
+            <span class="ms block mb-4 text-outline" style="font-size:64px;font-family:'Material Symbols Outlined';font-style:normal">poll</span>
+            <h3 class="text-xl font-semibold text-primary-container">Nenhuma pesquisa criada</h3>
+        </div>
+    }
+</div>
+
+<!-- Survey Modal -->
+<div id="survey-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-primary-container">Nova Pesquisa</h2>
+            <button onclick="document.getElementById('survey-modal').classList.add('hidden')" class="text-on-surface-variant">
+                <span class="ms" style="font-family:'Material Symbols Outlined';font-style:normal">close</span>
+            </button>
+        </div>
+        <form method="post" action="/admin/surveys/create">
+            @Html.AntiForgeryToken()
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Título *</label>
+                <input type="text" name="title" required placeholder="Ex: Pesquisa de Pulso – Junho" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Descrição</label>
+                <textarea name="description" rows="2" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary resize-none"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Tipo</label>
+                <select name="surveyType" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option value="pulse">Pulso</option>
+                    <option value="enps">eNPS</option>
+                    <option value="esat">ESAT</option>
+                    <option value="engagement">Engajamento</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Pontos de Recompensa</label>
+                <input type="number" name="rewardPoints" min="0" placeholder="0 = sem recompensa" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Data de Encerramento</label>
+                <input type="datetime-local" name="endsAt" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+            </div>
+            <div class="mb-6 flex items-center gap-3">
+                <input type="checkbox" name="isAnonymous" value="true" id="isAnon" checked class="accent-secondary w-4 h-4"/>
+                <label for="isAnon" class="text-sm text-on-surface-variant">Respostas anônimas</label>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('survey-modal').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Criar Pesquisa</button>
+            </div>
+        </form>
+    </div>
+</div>

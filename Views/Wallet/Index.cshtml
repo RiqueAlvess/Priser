@@ -1,0 +1,65 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Minha Carteira – Priser";
+    var wallets = ViewBag.Wallets as List<Wallet> ?? [];
+    var transactions = ViewBag.Transactions as List<Transaction> ?? [];
+    var userId = (Guid)(ViewBag.UserId ?? Guid.Empty);
+    var earned = wallets.FirstOrDefault(w => w.WalletType == "earned");
+    var allowance = wallets.FirstOrDefault(w => w.WalletType == "allowance");
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Minha Carteira</h1>
+    <p class="text-on-surface-variant mt-1">Acompanhe seus pontos e histórico de transações.</p>
+</header>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+    <div class="card p-6 border-l-4 border-secondary">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">Pontos Ganhos</p>
+            <span class="ms text-secondary text-[28px]">stars</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@(earned?.Balance.ToString("N0") ?? "0")</p>
+        <p class="text-xs text-on-surface-variant mt-1">Disponíveis para resgatar</p>
+    </div>
+    <div class="card p-6 border-l-4 border-on-tertiary-container">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">Orçamento</p>
+            <span class="ms text-[28px]" style="color:#567bff">workspace_premium</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@(allowance?.Balance.ToString("N0") ?? "0")</p>
+        <p class="text-xs text-on-surface-variant mt-1">Para reconhecer colegas</p>
+    </div>
+</div>
+
+<div class="card p-6">
+    <h2 class="text-xl font-bold text-primary-container mb-6">Histórico de Transações</h2>
+    @if (!transactions.Any())
+    {
+        <div class="text-center py-12 text-on-surface-variant">
+            <span class="ms text-[48px] block mb-3 opacity-30">receipt_long</span>
+            <p>Nenhuma transação ainda.</p>
+        </div>
+    }
+    <div class="space-y-3">
+        @foreach (var tx in transactions)
+        {
+            var isCredit = tx.ToWallet?.UserId == userId;
+            var amount = isCredit ? $"+{tx.Amount:N0}" : $"-{tx.Amount:N0}";
+            var color = isCredit ? "text-green-600" : "text-red-600";
+            var icon = isCredit ? "add_circle" : "remove_circle";
+            <div class="flex items-center gap-4 py-3 border-b border-outline-variant last:border-0">
+                <span class="ms @color text-[24px]">@icon</span>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-primary-container">@tx.TransactionType.Replace("_", " ").ToUpper()</p>
+                    @if (tx.Description != null)
+                    {
+                        <p class="text-xs text-on-surface-variant">@tx.Description</p>
+                    }
+                    <p class="text-xs text-on-surface-variant">@tx.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <span class="text-lg font-bold @color">@amount pts</span>
+            </div>
+        }
+    </div>
+</div>

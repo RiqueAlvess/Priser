@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@(ViewBag.Title ?? "Priser")</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary":                "#00020a",
+                        "primary-container":      "#0b1b3d",
+                        "on-primary":             "#ffffff",
+                        "on-primary-container":   "#7684ac",
+                        "secondary":              "#00658d",
+                        "secondary-container":    "#41befd",
+                        "on-secondary":           "#ffffff",
+                        "on-secondary-container": "#004b69",
+                        "tertiary-container":     "#001654",
+                        "on-tertiary-container":  "#567bff",
+                        "surface":                "#f8f9fa",
+                        "surface-container":      "#edeeef",
+                        "surface-container-low":  "#f3f4f5",
+                        "surface-container-lowest":"#ffffff",
+                        "on-surface":             "#191c1d",
+                        "on-surface-variant":     "#45464e",
+                        "outline":                "#75777f",
+                        "outline-variant":        "#c5c6cf",
+                        "primary-fixed-dim":      "#b7c6f1",
+                        "inverse-surface":        "#2e3132",
+                        "error":                  "#ba1a1a",
+                    },
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0px 4px 20px rgba(11,27,61,0.05); }
+        .card:hover { box-shadow: 0px 8px 30px rgba(11,27,61,0.1); }
+        .sidebar-link { display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:8px; font-size:14px; color:rgba(255,255,255,0.7); transition:all .15s; }
+        .sidebar-link:hover { color:#fff; background:rgba(255,255,255,0.1); }
+        .sidebar-link.active { color:#004b69; background:#41befd; font-weight:600; }
+        .btn-primary { background:#00A3E0; color:#fff; padding:10px 20px; border-radius:8px; font-weight:600; font-size:14px; transition:background .15s; }
+        .btn-primary:hover { background:#00658d; }
+        .btn-outline { border:1px solid #00658d; color:#00658d; padding:10px 20px; border-radius:8px; font-weight:600; font-size:14px; transition:all .15s; }
+        .btn-outline:hover { background:#00658d; color:#fff; }
+        .ms { font-family:'Material Symbols Outlined'; font-style:normal; font-size:20px; line-height:1; font-variation-settings:'FILL' 0,'wght' 400; vertical-align:middle; }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+<body class="text-on-surface antialiased">
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <!-- Top Nav -->
+    <nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white border-b border-outline-variant" style="box-shadow:0 2px 8px rgba(11,27,61,0.06)">
+        <div class="flex items-center gap-6">
+            <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg hover:bg-surface-container transition-colors">
+                <span class="ms">menu</span>
+            </button>
+            <a href="/" class="text-xl font-black text-secondary flex items-center gap-2">
+                <span class="ms text-[28px]">award_star</span>
+                Priser
+            </a>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold text-secondary border border-secondary px-3 py-1.5 rounded-full hidden sm:block">
+                @(ViewBag.WalletBalance ?? 0) pts
+            </span>
+            <a href="/notifications" class="relative p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant">
+                <span class="ms">notifications</span>
+                @{var unread = ViewBag.UnreadNotifications as int? ?? 0;}
+                @if (unread > 0)
+                {
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+                }
+            </a>
+            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-xs font-bold text-white">
+                @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col py-6 shadow-lg transition-transform -translate-x-full lg:translate-x-0" style="background:#0b1b3d">
+        <div class="px-6 mb-6 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#00658d">
+                @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-white">@User.Identity?.Name</p>
+                <p class="text-xs text-primary-fixed-dim opacity-60">@User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-3 space-y-1">
+            <a href="/" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                <span class="ms">home</span> Home
+            </a>
+            <a href="/feed" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Feed" ? "active" : "")">
+                <span class="ms">rss_feed</span> Feed
+            </a>
+            <a href="/recognize" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Recognize" ? "active" : "")">
+                <span class="ms">workspace_premium</span> Reconhecer
+            </a>
+            <a href="/wallet" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Wallet" ? "active" : "")">
+                <span class="ms">account_balance_wallet</span> Minha Carteira
+            </a>
+            <a href="/marketplace" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Marketplace" ? "active" : "")">
+                <span class="ms">redeem</span> Marketplace
+            </a>
+            <a href="/surveys" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Surveys" ? "active" : "")">
+                <span class="ms">poll</span> Pesquisas
+            </a>
+            @if (User.IsInRole("Manager") || User.IsInRole("TenantAdmin") || User.IsInRole("SystemAdmin"))
+            {
+                <a href="/approvals" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Approvals" ? "active" : "")">
+                    <span class="ms">fact_check</span> Aprovações
+                    @{var pending = ViewBag.PendingApprovals as int? ?? 0;}
+                    @if (pending > 0) {
+                        <span class="ml-auto bg-error text-white text-xs px-2 py-0.5 rounded-full">@pending</span>
+                    }
+                </a>
+            }
+            @if (User.IsInRole("TenantAdmin") || User.IsInRole("SystemAdmin"))
+            {
+                <div class="pt-3 mt-3 border-t border-white/10">
+                    <p class="px-4 text-xs text-white/40 uppercase tracking-wider mb-2">Admin</p>
+                    <a href="/admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                        <span class="ms">admin_panel_settings</span> Painel Admin
+                    </a>
+                </div>
+            }
+        </nav>
+
+        <div class="px-3 mt-auto space-y-1">
+            <a href="/recognize" class="btn-primary w-full flex items-center justify-center gap-2 mb-3">
+                <span class="ms text-[16px]">workspace_premium</span> Reconhecer
+            </a>
+            <div class="border-t border-white/10 pt-3">
+                <form method="post" action="/auth/logout">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="sidebar-link w-full text-left">
+                        <span class="ms">logout</span> Sair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 md:px-8 lg:ml-64 min-h-screen max-w-[1280px] mx-auto lg:mx-0 lg:max-w-none">
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl flex items-center gap-3">
+                <span class="ms text-green-600">check_circle</span>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl flex items-center gap-3">
+                <span class="ms text-red-600">error</span>
+                @TempData["Error"]
+            </div>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl flex items-center gap-3">
+                <span class="ms text-blue-600">info</span>
+                @TempData["Info"]
+            </div>
+        }
+        @RenderBody()
+    </main>
+
+    <script>
+        document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
+            document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+        });
+    </script>
+}
+else
+{
+    @RenderBody()
+}
+
+@RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,134 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Feed – Priser";
+    var recognitions = ViewBag.Recognitions as List<Recognition> ?? [];
+    var values = ViewBag.CompanyValues as List<CompanyValue> ?? [];
+    var currentUserId = (Guid)(ViewBag.CurrentUserId ?? Guid.Empty);
+    var page = (int)(ViewBag.Page ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+}
+
+<header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-primary-container">Feed de Reconhecimentos</h1>
+        <p class="text-on-surface-variant mt-1">Celebre os momentos incríveis do time.</p>
+    </div>
+    <a href="/recognize" class="btn-primary flex items-center gap-2 self-start">
+        <span class="ms text-[16px]">add</span> Novo Reconhecimento
+    </a>
+</header>
+
+<!-- Filters -->
+<div class="card p-4 mb-6 flex flex-wrap gap-3 items-center">
+    <span class="text-sm font-semibold text-on-surface-variant">Filtrar por valor:</span>
+    <a href="/feed" class="text-xs px-3 py-1.5 rounded-full font-semibold @(ViewBag.ValueFilter == null ? "bg-secondary text-white" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-low")">
+        Todos
+    </a>
+    @foreach (var v in values)
+    {
+        <a href="/feed?valueFilter=@v.Id" class="text-xs px-3 py-1.5 rounded-full font-semibold transition-colors @(ViewBag.ValueFilter?.ToString() == v.Id.ToString() ? "text-white" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-low")"
+           style="@(ViewBag.ValueFilter?.ToString() == v.Id.ToString() ? $"background:{v.Color}" : "")">
+            @v.Name
+        </a>
+    }
+</div>
+
+<!-- Feed -->
+<div class="space-y-4">
+    @if (!recognitions.Any())
+    {
+        <div class="card p-12 text-center">
+            <span class="ms text-[64px] block mb-4 text-outline">workspace_premium</span>
+            <h3 class="text-xl font-semibold text-primary-container">Nenhum reconhecimento encontrado</h3>
+            <p class="text-on-surface-variant mt-2">Seja o primeiro a reconhecer um colega!</p>
+            <a href="/recognize" class="btn-primary inline-flex items-center gap-2 mt-6">
+                <span class="ms text-[16px]">add</span> Reconhecer
+            </a>
+        </div>
+    }
+    @foreach (var r in recognitions)
+    {
+        <div class="card p-6 transition-all">
+            <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-base font-bold text-white" style="background:#0b1b3d">
+                    @r.Sender.FirstName.Substring(0, 1)
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                        <span class="font-bold text-primary-container">@r.Sender.FullName</span>
+                        <span class="ms text-secondary text-[16px]">workspace_premium</span>
+                        <span class="font-bold text-secondary">@r.Receiver.FullName</span>
+                        @if (r.CompanyValue != null)
+                        {
+                            <span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:@(r.CompanyValue.Color)22; color:@r.CompanyValue.Color">
+                                @r.CompanyValue.Name
+                            </span>
+                        }
+                        <span class="ml-auto text-xs text-on-surface-variant">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <p class="text-on-surface text-sm leading-relaxed mb-3">@r.Message</p>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-bold text-secondary flex items-center gap-1">
+                            <span class="ms text-[16px]">stars</span> @r.PointsAmount pts
+                        </span>
+                        <!-- React -->
+                        <form method="post" action="/feed/react" class="inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="recognitionId" value="@r.Id"/>
+                            <input type="hidden" name="emoji" value="👏"/>
+                            <button type="submit" class="flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary transition-colors">
+                                👏 @r.Reactions.Count(rx => rx.Emoji == "👏")
+                            </button>
+                        </form>
+                        <span class="text-xs text-on-surface-variant">
+                            <span class="ms text-[14px]">comment</span> @r.Comments.Count
+                        </span>
+                        @if (r.Sender.DepartmentId != null)
+                        {
+                            <span class="text-xs text-on-surface-variant">@(r.Sender.Department?.Name)</span>
+                        }
+                    </div>
+
+                    <!-- Comments -->
+                    @if (r.Comments.Any())
+                    {
+                        <div class="mt-4 space-y-2 border-t border-outline-variant pt-3">
+                            @foreach (var c in r.Comments.Take(3))
+                            {
+                                <div class="flex gap-2 text-sm">
+                                    <span class="font-semibold text-primary-container">@c.User.FirstName:</span>
+                                    <span class="text-on-surface-variant">@c.Content</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Add Comment -->
+                    <form method="post" action="/feed/addcomment" class="mt-3 flex gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="recognitionId" value="@r.Id"/>
+                        <input type="text" name="content" placeholder="Adicionar comentário..." maxlength="200"
+                               class="flex-1 text-sm border border-outline-variant rounded-lg px-3 py-1.5 focus:outline-none focus:border-secondary bg-surface-container-low"/>
+                        <button type="submit" class="text-secondary font-semibold text-sm hover:underline">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="flex justify-center gap-2 mt-8">
+        @if (page > 1)
+        {
+            <a href="/feed?page=@(page-1)&valueFilter=@ViewBag.ValueFilter" class="btn-outline px-4 py-2 text-sm">← Anterior</a>
+        }
+        <span class="px-4 py-2 text-sm text-on-surface-variant">@(page) / @(totalPages)</span>
+        @if (page < totalPages)
+        {
+            <a href="/feed?page=@(page+1)&valueFilter=@ViewBag.ValueFilter" class="btn-outline px-4 py-2 text-sm">Próximo →</a>
+        }
+    </div>
+}

@@ -1,0 +1,139 @@
+@using Priser.Models.Entities
+@using Priser.Models.ViewModels
+@model SendRecognitionViewModel
+@{
+    ViewBag.Title = "Reconhecer – Priser";
+    var users = ViewBag.Users as List<User> ?? [];
+    var values = ViewBag.CompanyValues as List<CompanyValue> ?? [];
+    var wallet = ViewBag.Wallet as Wallet;
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Reconhecer um Colega</h1>
+    <p class="text-on-surface-variant mt-1">Celebre conquistas e fortaleça a cultura da empresa.</p>
+</header>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    <div class="xl:col-span-2">
+        <div class="card p-8">
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post" action="/recognize/send">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-primary-container mb-2">
+                        Quem você quer reconhecer? *
+                    </label>
+                    <select name="ReceiverId" required
+                            class="w-full border border-outline-variant rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-secondary bg-white">
+                        <option value="">Selecione um colaborador...</option>
+                        @foreach (var u in users)
+                        {
+                            <option value="@u.Id">@u.FullName @(u.JobTitle != null ? $"– {u.JobTitle}" : "") @(u.Department != null ? $"({u.Department.Name})" : "")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-primary-container mb-2">
+                        Valor Cultural
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="CompanyValueId" value="" class="sr-only peer"/>
+                            <div class="p-3 border-2 border-outline-variant rounded-xl text-center text-sm peer-checked:border-secondary peer-checked:bg-blue-50 transition-all hover:border-secondary/50">
+                                <span class="ms block text-[24px] mb-1 text-on-surface-variant">remove</span>
+                                <span class="font-medium">Sem valor</span>
+                            </div>
+                        </label>
+                        @foreach (var v in values)
+                        {
+                            <label class="cursor-pointer">
+                                <input type="radio" name="CompanyValueId" value="@v.Id" class="sr-only peer"/>
+                                <div class="p-3 border-2 border-outline-variant rounded-xl text-center text-sm peer-checked:border-current transition-all hover:border-current/50"
+                                     style="--tw-border-opacity:1">
+                                    <span class="ms block text-[24px] mb-1" style="color:@v.Color">@(v.Icon ?? "star")</span>
+                                    <span class="font-medium" style="color:@v.Color">@v.Name</span>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-primary-container mb-2">
+                        Mensagem * <span class="font-normal text-on-surface-variant">(10–500 caracteres)</span>
+                    </label>
+                    <textarea name="Message" rows="4" maxlength="500" required placeholder="Descreva por que este colega merece reconhecimento..."
+                              class="w-full border border-outline-variant rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-secondary resize-none bg-white">@Model?.Message</textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-primary-container mb-2">
+                        Pontos *
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" name="Points" min="10" max="500" value="@(Model?.Points ?? 50)" step="10"
+                               id="pointsRange" class="flex-1 accent-secondary"
+                               oninput="document.getElementById('pointsDisplay').textContent = this.value"/>
+                        <span class="text-2xl font-black text-secondary min-w-[80px] text-right">
+                            <span id="pointsDisplay">@(Model?.Points ?? 50)</span> pts
+                        </span>
+                    </div>
+                    <div class="flex justify-between text-xs text-on-surface-variant mt-1">
+                        <span>10 pts</span>
+                        <span>500 pts</span>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-primary-container mb-2">Visibilidade</label>
+                    <div class="flex gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="radio" name="Visibility" value="public" checked class="accent-secondary"/>
+                            <span class="ms text-[16px]">public</span> Público
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="radio" name="Visibility" value="private" class="accent-secondary"/>
+                            <span class="ms text-[16px]">lock</span> Privado
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2 py-4 text-base">
+                    <span class="ms">workspace_premium</span> Enviar Reconhecimento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="card p-6">
+            <h3 class="font-bold text-primary-container mb-3 flex items-center gap-2">
+                <span class="ms text-secondary">account_balance_wallet</span> Saldo Disponível
+            </h3>
+            <p class="text-3xl font-black text-secondary">@(wallet?.Balance.ToString("N0") ?? "0") pts</p>
+            <p class="text-xs text-on-surface-variant mt-1">Orçamento de reconhecimento</p>
+        </div>
+
+        <div class="card p-6">
+            <h3 class="font-bold text-primary-container mb-3">💡 Dicas</h3>
+            <ul class="space-y-2 text-sm text-on-surface-variant">
+                <li class="flex gap-2"><span class="ms text-[14px] text-secondary flex-shrink-0">check_circle</span> Seja específico sobre o que a pessoa fez.</li>
+                <li class="flex gap-2"><span class="ms text-[14px] text-secondary flex-shrink-0">check_circle</span> Conecte ao impacto no time ou empresa.</li>
+                <li class="flex gap-2"><span class="ms text-[14px] text-secondary flex-shrink-0">check_circle</span> Acima de 100 pts requer aprovação do gestor.</li>
+            </ul>
+        </div>
+    </div>
+</div>

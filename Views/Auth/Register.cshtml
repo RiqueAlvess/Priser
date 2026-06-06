@@ -1,0 +1,69 @@
+@model Priser.Models.ViewModels.RegisterViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Criar conta – Priser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+    <style>body { font-family: 'Inter', sans-serif; } .ms { font-family:'Material Symbols Outlined'; font-style:normal; font-size:20px; line-height:1; vertical-align:middle; }</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6" style="background:#0b1b3d">
+    <div class="w-full max-w-lg bg-white rounded-2xl p-8 shadow-2xl">
+        <div class="text-2xl font-black flex items-center gap-2 mb-8" style="color:#00658d">
+            <span class="ms text-[32px]">award_star</span> Priser
+        </div>
+        <h2 class="text-2xl font-bold mb-2" style="color:#0b1b3d">Criar conta gratuita</h2>
+        <p class="text-sm text-gray-500 mb-8">Configure sua empresa e comece a reconhecer em minutos.</p>
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+        {
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                { <p>@error.ErrorMessage</p> }
+            </div>
+        }
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Nome *</label>
+                    <input asp-for="FirstName" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="João"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Sobrenome *</label>
+                    <input asp-for="LastName" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="Silva"/>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Email corporativo *</label>
+                <input asp-for="Email" type="email" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="joao@empresa.com"/>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Nome da empresa *</label>
+                <input asp-for="CompanyName" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="Empresa LTDA"/>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Senha *</label>
+                <input asp-for="Password" type="password" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="Mínimo 8 caracteres"/>
+            </div>
+            <div class="mb-8">
+                <label class="block text-sm font-semibold mb-1.5" style="color:#0b1b3d">Confirmar senha *</label>
+                <input asp-for="ConfirmPassword" type="password" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" placeholder="Repita a senha"/>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-white transition-colors" style="background:#00658d">
+                Criar conta e começar →
+            </button>
+        </form>
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Já tem conta? <a href="/auth/login" class="font-semibold hover:underline" style="color:#00658d">Entrar</a>
+        </p>
+    </div>
+</body>
+</html>

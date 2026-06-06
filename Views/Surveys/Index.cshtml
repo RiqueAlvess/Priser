@@ -1,0 +1,76 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Pesquisas – Priser";
+    var surveys = ViewBag.Surveys as List<Survey> ?? [];
+    var answered = ViewBag.Answered as List<Guid> ?? [];
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Pesquisas</h1>
+    <p class="text-on-surface-variant mt-1">Sua voz importa — compartilhe sua experiência e ganhe pontos.</p>
+</header>
+
+@if (!surveys.Any())
+{
+    <div class="card p-12 text-center">
+        <span class="ms text-[64px] block mb-4 text-outline">poll</span>
+        <h3 class="text-xl font-semibold text-primary-container">Nenhuma pesquisa ativa</h3>
+        <p class="text-on-surface-variant mt-2">Novas pesquisas aparecerão aqui quando disponíveis.</p>
+    </div>
+}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @foreach (var s in surveys)
+    {
+        var isDone = answered.Contains(s.Id);
+        var typeLabel = s.SurveyType switch {
+            "enps"  => "eNPS",
+            "pulse" => "Pulso",
+            "esat"  => "ESAT",
+            _       => s.SurveyType
+        };
+        var typeColor = s.SurveyType switch {
+            "enps"  => "bg-purple-100 text-purple-800",
+            "pulse" => "bg-blue-100 text-blue-800",
+            "esat"  => "bg-green-100 text-green-800",
+            _       => "bg-surface-container text-on-surface-variant"
+        };
+        <div class="card p-6 @(isDone ? "opacity-60" : "")">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <div>
+                    <span class="text-xs px-2 py-1 rounded-full font-semibold @typeColor mr-2">@typeLabel</span>
+                    @if (s.IsAnonymous)
+                    {
+                        <span class="text-xs px-2 py-1 rounded-full bg-surface-container text-on-surface-variant">Anônima</span>
+                    }
+                </div>
+                @if (s.RewardPoints.HasValue && s.RewardPoints > 0)
+                {
+                    <span class="text-sm font-bold text-secondary flex items-center gap-1">
+                        <span class="ms text-[14px]">stars</span> +@s.RewardPoints pts
+                    </span>
+                }
+            </div>
+            <h3 class="text-lg font-bold text-primary-container mb-2">@s.Title</h3>
+            @if (s.Description != null)
+            {
+                <p class="text-sm text-on-surface-variant mb-4">@s.Description</p>
+            }
+            @if (s.EndsAt.HasValue)
+            {
+                <p class="text-xs text-on-surface-variant mb-4">Expira: @s.EndsAt.Value.ToString("dd/MM/yyyy")</p>
+            }
+            @if (isDone)
+            {
+                <div class="flex items-center gap-2 text-green-600 text-sm font-semibold">
+                    <span class="ms text-[16px]">check_circle</span> Respondida
+                </div>
+            }
+            else
+            {
+                <a href="/surveys/take/@s.Id" class="btn-primary flex items-center justify-center gap-2">
+                    <span class="ms text-[16px]">arrow_forward</span> Responder
+                </a>
+            }
+        </div>
+    }
+</div>

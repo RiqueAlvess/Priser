@@ -1,0 +1,120 @@
+@{
+    ViewBag.Title = "Dashboard – Priser";
+    var user = ViewBag.User as Priser.Models.Entities.User;
+    var balance = (decimal)(ViewBag.WalletBalance ?? 0);
+    var recent = ViewBag.RecentRecognitions as List<Priser.Models.Entities.Recognition> ?? [];
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">
+        Olá, @(user?.FirstName ?? "Colaborador") 👋
+    </h1>
+    <p class="text-on-surface-variant mt-1">Bem-vindo ao Priser — reconheça, celebre e evolua.</p>
+</header>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-on-surface-variant text-sm font-semibold uppercase tracking-wider">Meus Pontos</span>
+            <span class="ms text-secondary text-[28px]">account_balance_wallet</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@balance.ToString("N0")</p>
+        <p class="text-xs text-on-surface-variant mt-1">pontos disponíveis</p>
+    </div>
+
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-on-surface-variant text-sm font-semibold uppercase tracking-wider">Reconhecimentos</span>
+            <span class="ms text-secondary text-[28px]">workspace_premium</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@recent.Count</p>
+        <p class="text-xs text-on-surface-variant mt-1">recentes no feed</p>
+    </div>
+
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-on-surface-variant text-sm font-semibold uppercase tracking-wider">Aprovações</span>
+            <span class="ms text-secondary text-[28px]">fact_check</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@(ViewBag.PendingApprovals ?? 0)</p>
+        <p class="text-xs text-on-surface-variant mt-1">aguardando revisão</p>
+    </div>
+
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-on-surface-variant text-sm font-semibold uppercase tracking-wider">Notificações</span>
+            <span class="ms text-secondary text-[28px]">notifications</span>
+        </div>
+        <p class="text-4xl font-black text-primary-container">@(ViewBag.UnreadNotifications ?? 0)</p>
+        <p class="text-xs text-on-surface-variant mt-1">não lidas</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2">
+        <div class="card p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-primary-container">Feed Recente</h2>
+                <a href="/feed" class="text-secondary text-sm font-semibold hover:underline">Ver tudo →</a>
+            </div>
+            @if (!recent.Any())
+            {
+                <div class="text-center py-12 text-on-surface-variant">
+                    <span class="ms text-[48px] block mb-3 opacity-30">workspace_premium</span>
+                    <p class="font-semibold">Nenhum reconhecimento ainda.</p>
+                    <p class="text-sm mt-1">Seja o primeiro a reconhecer um colega!</p>
+                    <a href="/recognize" class="btn-primary inline-flex items-center gap-2 mt-4">
+                        <span class="ms text-[16px]">add</span> Reconhecer agora
+                    </a>
+                </div>
+            }
+            @foreach (var r in recent)
+            {
+                <div class="flex gap-4 py-4 border-b border-outline-variant last:border-0">
+                    <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white" style="background:#0b1b3d">
+                        @r.Sender.FirstName.Substring(0, 1)
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm">
+                            <span class="font-semibold text-primary-container">@r.Sender.FullName</span>
+                            <span class="text-on-surface-variant"> reconheceu </span>
+                            <span class="font-semibold text-secondary">@r.Receiver.FullName</span>
+                        </p>
+                        <p class="text-sm text-on-surface-variant mt-1 truncate">@r.Message</p>
+                        <div class="flex items-center gap-3 mt-2">
+                            @if (r.CompanyValue != null)
+                            {
+                                <span class="text-xs px-2 py-1 rounded-full font-semibold" style="background:@(r.CompanyValue.Color)22; color:@r.CompanyValue.Color">
+                                    @r.CompanyValue.Name
+                                </span>
+                            }
+                            <span class="text-xs font-bold text-secondary">+@r.PointsAmount pts</span>
+                            <span class="text-xs text-on-surface-variant">@r.CreatedAt.ToString("dd/MM HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="card p-6">
+            <h2 class="text-xl font-bold text-primary-container mb-4">Ação Rápida</h2>
+            <a href="/recognize" class="btn-primary w-full flex items-center justify-center gap-2 mb-3">
+                <span class="ms text-[16px]">workspace_premium</span> Reconhecer Colega
+            </a>
+            <a href="/marketplace" class="btn-outline w-full flex items-center justify-center gap-2">
+                <span class="ms text-[16px]">redeem</span> Ver Marketplace
+            </a>
+        </div>
+
+        <div class="card p-6">
+            <h2 class="text-xl font-bold text-primary-container mb-4">Seus Departamentos</h2>
+            <p class="text-sm text-on-surface-variant">@(user?.Department?.Name ?? "Sem departamento")</p>
+            @if (user?.JobTitle != null)
+            {
+                <p class="text-sm text-on-surface-variant mt-1">@user.JobTitle</p>
+            }
+        </div>
+    </div>
+</div>

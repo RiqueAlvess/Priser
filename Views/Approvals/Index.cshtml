@@ -1,0 +1,95 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Aprovações – Priser";
+    var pending = ViewBag.Pending as List<ApprovalRequest> ?? [];
+    var history = ViewBag.History as List<ApprovalRequest> ?? [];
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Aprovações</h1>
+    <p class="text-on-surface-variant mt-1">Gerencie os reconhecimentos que precisam da sua aprovação.</p>
+</header>
+
+@if (!pending.Any())
+{
+    <div class="card p-10 text-center mb-8">
+        <span class="ms text-[48px] block mb-3 text-green-500">check_circle</span>
+        <h3 class="text-xl font-semibold text-primary-container">Tudo em dia!</h3>
+        <p class="text-on-surface-variant mt-1">Nenhuma aprovação pendente no momento.</p>
+    </div>
+}
+else
+{
+    <h2 class="text-xl font-bold text-primary-container mb-4">
+        Pendentes <span class="ml-2 bg-error text-white text-sm px-2 py-0.5 rounded-full">@pending.Count</span>
+    </h2>
+    <div class="space-y-4 mb-8">
+        @foreach (var req in pending)
+        {
+            <div class="card p-6">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-primary-container">@req.Recognition.Sender.FullName</span>
+                            <span class="ms text-secondary text-[16px]">workspace_premium</span>
+                            <span class="font-bold text-secondary">@req.Recognition.Receiver.FullName</span>
+                        </div>
+                        @if (req.Recognition.CompanyValue != null)
+                        {
+                            <span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:@(req.Recognition.CompanyValue.Color)22; color:@req.Recognition.CompanyValue.Color">
+                                @req.Recognition.CompanyValue.Name
+                            </span>
+                        }
+                    </div>
+                    <span class="text-2xl font-black text-secondary flex-shrink-0">@req.Recognition.PointsAmount pts</span>
+                </div>
+                <p class="text-sm text-on-surface-variant mb-4 italic">"@req.Recognition.Message"</p>
+                <p class="text-xs text-on-surface-variant mb-4">Solicitado em @req.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <form method="post" action="/approvals/approve" class="flex gap-2 flex-1">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="requestId" value="@req.Id"/>
+                        <input type="text" name="notes" placeholder="Notas (opcional)" class="flex-1 border border-outline-variant rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-secondary"/>
+                        <button type="submit" class="btn-primary flex items-center gap-2">
+                            <span class="ms text-[16px]">check</span> Aprovar
+                        </button>
+                    </form>
+                    <form method="post" action="/approvals/reject">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="requestId" value="@req.Id"/>
+                        <button type="submit" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-red-100 flex items-center gap-2">
+                            <span class="ms text-[16px]">close</span> Recusar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (history.Any())
+{
+    <h2 class="text-xl font-bold text-primary-container mb-4">Histórico</h2>
+    <div class="card divide-y divide-outline-variant">
+        @foreach (var req in history)
+        {
+            var badge = req.Status == "approved"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800";
+            var icon = req.Status == "approved" ? "check_circle" : "cancel";
+            var color = req.Status == "approved" ? "text-green-600" : "text-red-600";
+            <div class="p-4 flex items-center gap-4">
+                <span class="ms @color text-[24px]">@icon</span>
+                <div class="flex-1">
+                    <p class="text-sm">
+                        <span class="font-semibold">@req.Recognition.Sender.FullName</span>
+                        → <span class="font-semibold text-secondary">@req.Recognition.Receiver.FullName</span>
+                        <span class="font-bold text-primary-container ml-2">@req.Recognition.PointsAmount pts</span>
+                    </p>
+                    <p class="text-xs text-on-surface-variant">@req.ReviewedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full @badge">@req.Status</span>
+            </div>
+        }
+    </div>
+}

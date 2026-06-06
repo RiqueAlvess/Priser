@@ -1,0 +1,114 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Usuários – Admin";
+    var users = ViewBag.Users as List<User> ?? [];
+    var departments = ViewBag.Departments as List<Department> ?? [];
+    var roles = ViewBag.Roles as List<Role> ?? [];
+}
+
+<header class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-primary-container">Usuários</h1>
+        <a href="/admin" class="text-secondary text-sm hover:underline">← Admin</a>
+    </div>
+    <button onclick="document.getElementById('invite-modal').classList.remove('hidden')" class="btn-primary flex items-center gap-2">
+        <span class="ms" style="font-size:16px;font-family:'Material Symbols Outlined';font-style:normal">person_add</span> Convidar
+    </button>
+</header>
+
+<div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Colaborador</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Departamento</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Papel</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Pontos</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                @foreach (var u in users)
+                {
+                    var earned = u.Wallets.FirstOrDefault(w => w.WalletType == "earned");
+                    var role = u.UserRoles.FirstOrDefault()?.Role?.Name ?? "—";
+                    var statusColor = u.Status == "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                    <tr class="hover:bg-surface-container transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#0b1b3d">
+                                    @u.FirstName.Substring(0,1)
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-primary-container">@u.FullName</p>
+                                    <p class="text-xs text-on-surface-variant">@u.Email</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-on-surface-variant">@(u.Department?.Name ?? "—")</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold bg-surface-container text-on-surface-variant">@role</span>
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-secondary">@(earned?.Balance.ToString("N0") ?? "0") pts</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold @statusColor">@u.Status</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div id="invite-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-primary-container">Convidar Colaborador</h2>
+            <button onclick="document.getElementById('invite-modal').classList.add('hidden')" class="text-on-surface-variant hover:text-primary-container">
+                <span class="ms" style="font-family:'Material Symbols Outlined';font-style:normal">close</span>
+            </button>
+        </div>
+        <form method="post" action="/admin/users/invite">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5 text-primary-container">Nome *</label>
+                    <input type="text" name="firstName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5 text-primary-container">Sobrenome *</label>
+                    <input type="text" name="lastName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Email *</label>
+                <input type="email" name="email" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary"/>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Departamento</label>
+                <select name="departmentId" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option value="">Sem departamento</option>
+                    @foreach (var d in departments)
+                    {
+                        <option value="@d.Id">@d.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-1.5 text-primary-container">Papel *</label>
+                <select name="roleId" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    @foreach (var r in roles.Where(r => r.NormalizedName != "SYSTEMADMIN"))
+                    {
+                        <option value="@r.Id">@r.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('invite-modal').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Convidar</button>
+            </div>
+        </form>
+    </div>
+</div>
