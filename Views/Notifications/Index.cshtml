@@ -1,0 +1,42 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Notificações – Priser";
+    var notifications = ViewBag.Notifications as List<Notification> ?? [];
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Notificações</h1>
+</header>
+
+@if (!notifications.Any())
+{
+    <div class="card p-12 text-center">
+        <span class="ms text-[64px] block mb-4 text-outline">notifications_none</span>
+        <h3 class="text-xl font-semibold text-primary-container">Sem notificações</h3>
+    </div>
+}
+<div class="card divide-y divide-outline-variant max-w-2xl">
+    @foreach (var n in notifications)
+    {
+        var icon = n.Type switch {
+            "recognition_received" => "workspace_premium",
+            "recognition_approved" => "check_circle",
+            "recognition_rejected" => "cancel",
+            "approval_needed"      => "pending_actions",
+            "survey_reward"        => "stars",
+            _                      => "notifications"
+        };
+        <div class="p-4 flex gap-4 @(n.ReadAt == null ? "bg-blue-50/50" : "")">
+            <span class="ms text-secondary text-[24px] flex-shrink-0 mt-0.5">@icon</span>
+            <div class="flex-1">
+                <p class="font-semibold text-primary-container text-sm">@n.Title</p>
+                <p class="text-sm text-on-surface-variant mt-0.5">@n.Message</p>
+                <p class="text-xs text-on-surface-variant mt-1">@n.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+            @if (n.ActionUrl != null)
+            {
+                <a href="@n.ActionUrl" class="text-secondary text-sm font-semibold hover:underline flex-shrink-0 self-center">Ver →</a>
+            }
+        </div>
+    }
+</div>
