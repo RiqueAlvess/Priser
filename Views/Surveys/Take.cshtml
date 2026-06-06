@@ -2,6 +2,7 @@
 @{
     ViewBag.Title = "Responder Pesquisa – Priser";
     var survey = ViewBag.Survey as Survey;
+    var questions = survey?.Questions.OrderBy(question => question.DisplayOrder).ToList() ?? new List<SurveyQuestion>();
 }
 
 <header class="mb-8">
@@ -28,7 +29,7 @@
             <input type="hidden" name="surveyId" value="@survey?.Id"/>
 
             <div class="space-y-8">
-                @foreach (var q in survey?.Questions.OrderBy(q => q.DisplayOrder) ?? [])
+                @foreach (var q in questions)
                 {
                     <div>
                         <label class="block text-sm font-semibold text-primary-container mb-3">
@@ -80,13 +81,13 @@
                         }
                         else if (q.QuestionType == "choice" && q.Options != null)
                         {
-                            var opts = q.Options.Split(',', StringSplitOptions.TrimEntries);
+                            var choices = q.Options.Split(new[] { ',' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                             <div class="space-y-2">
-                                @foreach (var opt in opts)
+                                @foreach (var option in choices)
                                 {
                                     <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="radio" name="answers[@q.Id]" value="@opt" @(q.IsRequired ? "required" : "") class="accent-secondary"/>
-                                        <span class="text-sm">@opt</span>
+                                        <input type="radio" name="answers[@q.Id]" value="@option" @(q.IsRequired ? "required" : "") class="accent-secondary"/>
+                                        <span class="text-sm">@option</span>
                                     </label>
                                 }
                             </div>
