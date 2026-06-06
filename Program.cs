@@ -23,6 +23,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("TenantAdmin", p => p.RequireRole("TenantAdmin", "SystemAdmin"));
     options.AddPolicy("Manager", p => p.RequireRole("Manager", "TenantAdmin", "SystemAdmin"));
     options.AddPolicy("Employee", p => p.RequireRole("Employee", "Manager", "TenantAdmin", "SystemAdmin"));
+    options.AddPolicy("Viewer", p => p.RequireRole("Viewer", "TenantAdmin", "SystemAdmin"));
 });
 
 builder.Services.AddHttpContextAccessor();
