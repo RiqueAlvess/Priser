@@ -1,6 +1,7 @@
 @using Priser.Models.Entities
 @{
     ViewBag.Title = "Enterprise Suite – Priser";
+    var tenant = ViewBag.Tenant as Tenant;
     var compliance = ViewBag.Compliance as ComplianceSetting;
     var flags = ViewBag.FeatureFlags as List<FeatureFlag> ?? new List<FeatureFlag>();
     var pools = ViewBag.PointPools as List<PointPool> ?? new List<PointPool>();
@@ -10,6 +11,8 @@
     var reports = ViewBag.Reports as List<Report> ?? new List<Report>();
     decimal pointsLiability = ViewBag.PointsLiability is decimal liability ? liability : 0;
     decimal burnRate = ViewBag.BurnRate is decimal burn ? burn : 0;
+    var primaryColor = tenant?.PrimaryColor ?? "#0b1b3d";
+    var accentColor = tenant?.AccentColor ?? "#00A3E0";
     var encryptionMode = compliance?.EncryptionMode ?? "application";
     var encryptionModes = new[]
     {
@@ -46,6 +49,30 @@
         <p class="text-2xl font-bold text-primary-container mt-2">@automations.Count(r => r.IsActive)</p>
     </div>
 </div>
+
+
+<section class="card p-6 mb-6">
+    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">storefront</span> Identidade da empresa</h2>
+    <form method="post" action="/admin/enterprise/branding" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+        @Html.AntiForgeryToken()
+        <label class="block text-sm font-medium md:col-span-1">Nome
+            <input name="name" value="@(tenant?.Name ?? "")" required class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium md:col-span-2">Logo URL
+            <input name="logoUrl" type="url" value="@(tenant?.LogoUrl ?? "")" placeholder="https://.../logo.png" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium">Cor primária
+            <input name="primaryColor" value="@primaryColor" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium">Cor destaque
+            <input name="accentColor" value="@accentColor" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <div class="md:col-span-5 flex items-center justify-between gap-4">
+            <p class="text-xs text-on-surface-variant">O logo é exibido no menu após o próximo login do usuário.</p>
+            <button class="btn-primary">Salvar identidade</button>
+        </div>
+    </form>
+</section>
 
 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
     <section class="card p-6">

@@ -64,9 +64,20 @@
             <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg hover:bg-surface-container transition-colors">
                 <span class="ms">menu</span>
             </button>
+            @{
+                var tenantLogoUrl = User.FindFirst("tenant_logo_url")?.Value;
+                var tenantName = User.FindFirst("tenant_name")?.Value ?? "Priser";
+            }
             <a href="/" class="text-xl font-black text-secondary flex items-center gap-2">
-                <span class="ms text-[28px]">award_star</span>
-                Priser
+                @if (!string.IsNullOrWhiteSpace(tenantLogoUrl))
+                {
+                    <img src="@tenantLogoUrl" alt="@tenantName" class="h-9 max-w-[140px] object-contain" />
+                }
+                else
+                {
+                    <span class="ms text-[28px]">award_star</span>
+                    <span>Priser</span>
+                }
             </a>
         </div>
         <div class="flex items-center gap-3">
@@ -100,6 +111,12 @@
         </div>
 
         <nav class="flex-1 px-3 space-y-1">
+            @if (User.IsInRole("SystemAdmin"))
+            {
+                <a href="/system" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "System" ? "active" : "")">
+                    <span class="ms">corporate_fare</span> Sistema
+                </a>
+            }
             <a href="/" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
                 <span class="ms">home</span> Home
             </a>

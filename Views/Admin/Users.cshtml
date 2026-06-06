@@ -1,9 +1,9 @@
 @using Priser.Models.Entities
 @{
     ViewBag.Title = "Usuários – Admin";
-    var users = ViewBag.Users as List<User> ?? [];
-    var departments = ViewBag.Departments as List<Department> ?? [];
-    var roles = ViewBag.Roles as List<Role> ?? [];
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var departments = ViewBag.Departments as List<Department> ?? new List<Department>();
+    var roles = ViewBag.Roles as List<Role> ?? new List<Role>();
 }
 
 <header class="mb-6 flex items-center justify-between">
@@ -11,9 +11,14 @@
         <h1 class="text-3xl font-bold text-primary-container">Usuários</h1>
         <a href="/admin" class="text-secondary text-sm hover:underline">← Admin</a>
     </div>
-    <button onclick="document.getElementById('invite-modal').classList.remove('hidden')" class="btn-primary flex items-center gap-2">
-        <span class="ms" style="font-size:16px;font-family:'Material Symbols Outlined';font-style:normal">person_add</span> Convidar
-    </button>
+    <div class="flex gap-2">
+        <button onclick="document.getElementById('csv-modal').classList.remove('hidden')" class="btn-outline flex items-center gap-2">
+            <span class="ms" style="font-size:16px;font-family:'Material Symbols Outlined';font-style:normal">upload_file</span> CSV
+        </button>
+        <button onclick="document.getElementById('invite-modal').classList.remove('hidden')" class="btn-primary flex items-center gap-2">
+            <span class="ms" style="font-size:16px;font-family:'Material Symbols Outlined';font-style:normal">person_add</span> Convidar
+        </button>
+    </div>
 </header>
 
 <div class="card overflow-hidden">
@@ -58,6 +63,32 @@
                 }
             </tbody>
         </table>
+    </div>
+</div>
+
+
+<!-- CSV Modal -->
+<div id="csv-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-primary-container">Importar colaboradores por CSV</h2>
+            <button onclick="document.getElementById('csv-modal').classList.add('hidden')" class="text-on-surface-variant hover:text-primary-container">
+                <span class="ms" style="font-family:'Material Symbols Outlined';font-style:normal">close</span>
+            </button>
+        </div>
+        <form method="post" action="/admin/users/import-csv" enctype="multipart/form-data" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="file" name="csvFile" accept=".csv,text/csv" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+            <div class="bg-surface-container-low rounded-xl p-4 text-xs text-on-surface-variant">
+                <p class="font-semibold text-primary-container mb-2">Formato esperado:</p>
+                <code>email,firstName,lastName,role,department,managerEmail</code>
+                <p class="mt-2">Roles aceitos: Employee, Manager, TenantAdmin, Viewer. SystemAdmin é bloqueado dentro do tenant.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('csv-modal').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Importar</button>
+            </div>
+        </form>
     </div>
 </div>
 
