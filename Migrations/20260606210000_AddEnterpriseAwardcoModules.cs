@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -308,10 +308,7 @@ namespace Priser.Migrations
                 "\"DeletedAt\" timestamp with time zone NULL"
             }.Concat(domainColumns));
 
-            migrationBuilder.Sql($@"CREATE TABLE \"{name}\" (
-                    {columns},
-                    CONSTRAINT \"PK_{name}\" PRIMARY KEY (\"Id\")
-                );");
+            migrationBuilder.Sql($"CREATE TABLE \"{name}\" (\n                    {columns},\n                    CONSTRAINT \"PK_{name}\" PRIMARY KEY (\"Id\")\n                );");
         }
     }
 }
