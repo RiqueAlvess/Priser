@@ -1,0 +1,139 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Sistema – Priser";
+    var tenants = ViewBag.Tenants as List<Tenant> ?? new List<Tenant>();
+    var tenantAdmins = ViewBag.TenantAdmins as List<User> ?? new List<User>();
+}
+
+<header class="mb-8">
+    <p class="text-secondary font-semibold uppercase tracking-wide text-sm">System Admin</p>
+    <h1 class="text-3xl font-bold text-primary-container mt-1">Empresas e acessos Tenant Admin</h1>
+    <p class="text-on-surface-variant mt-2">Acesso global para criar empresas, definir logo/branding e provisionar o primeiro administrador do tenant.</p>
+</header>
+
+
+<section class="card p-6 mb-8">
+    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">security</span> Matriz RBAC aplicada</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr>
+                    <th class="text-left px-4 py-3">Role</th>
+                    <th class="text-left px-4 py-3">Escopo de visão</th>
+                    <th class="text-left px-4 py-3">Permissões de escrita</th>
+                    <th class="text-left px-4 py-3">Observações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                <tr><td class="px-4 py-3 font-bold">System Admin</td><td class="px-4 py-3">Todos os tenants</td><td class="px-4 py-3">Gerencia tenants, planos e infraestrutura</td><td class="px-4 py-3">Superusuário da plataforma</td></tr>
+                <tr><td class="px-4 py-3 font-bold">Tenant Admin</td><td class="px-4 py-3">Todo o tenant_id</td><td class="px-4 py-3">Configurações, HRIS stub, orçamentos, relatórios e CSV</td><td class="px-4 py-3">RH / Gestor de Pessoas</td></tr>
+                <tr><td class="px-4 py-3 font-bold">Manager</td><td class="px-4 py-3">Hierarquia direta + indireta</td><td class="px-4 py-3">Distribui pontos, aprova/rejeita, relatórios do time</td><td class="px-4 py-3">Líderes de equipe</td></tr>
+                <tr><td class="px-4 py-3 font-bold">Employee</td><td class="px-4 py-3">Feed público + próprios dados</td><td class="px-4 py-3">Reconhecimentos, resgates e perfil básico</td><td class="px-4 py-3">Colaboradores</td></tr>
+                <tr><td class="px-4 py-3 font-bold">Viewer</td><td class="px-4 py-3">Definido por tenant</td><td class="px-4 py-3">Apenas visualização de relatórios</td><td class="px-4 py-3">Auditores internos</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+    <section class="card p-6 xl:col-span-1">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">add_business</span> Nova empresa</h2>
+        <form method="post" action="/system/tenants/create" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Nome da empresa *</label>
+                <input name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Slug</label>
+                <input name="slug" placeholder="empresa-cliente" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
+                <input name="logoUrl" type="url" placeholder="https://.../logo.png" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
+                    <input name="primaryColor" value="#0b1b3d" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
+                    <input name="accentColor" value="#00A3E0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-outline-variant">
+                <h3 class="font-bold text-primary-container mb-3">Primeiro Tenant Admin</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <input name="adminFirstName" placeholder="Nome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                    <input name="adminLastName" placeholder="Sobrenome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                </div>
+                <input name="adminEmail" type="email" placeholder="admin@empresa.com" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm mb-3" />
+                <input name="adminPassword" placeholder="Senha opcional" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                <p class="text-xs text-on-surface-variant mt-2">Se vazio, uma senha temporária será gerada e exibida após criar.</p>
+            </div>
+            <button class="btn-primary w-full">Criar empresa</button>
+        </form>
+    </section>
+
+    <section class="card p-6 xl:col-span-2">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">corporate_fare</span> Empresas</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead style="background:#f3f4f5">
+                    <tr>
+                        <th class="text-left px-4 py-3">Empresa</th>
+                        <th class="text-left px-4 py-3">Slug</th>
+                        <th class="text-left px-4 py-3">Plano</th>
+                        <th class="text-left px-4 py-3">Status</th>
+                        <th class="text-left px-4 py-3">Ação</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant">
+                    @foreach (var tenant in tenants)
+                    {
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    @if (!string.IsNullOrWhiteSpace(tenant.LogoUrl))
+                                    {
+                                        <img src="@tenant.LogoUrl" alt="@tenant.Name" class="w-10 h-10 rounded-lg object-contain bg-white border border-outline-variant" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold">@tenant.Name.Substring(0, 1)</div>
+                                    }
+                                    <span class="font-semibold text-primary-container">@tenant.Name</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-on-surface-variant">@tenant.Slug</td>
+                            <td class="px-4 py-3">@tenant.BillingPlan</td>
+                            <td class="px-4 py-3">@tenant.Status</td>
+                            <td class="px-4 py-3">
+                                <form method="post" action="/system/tenants/@tenant.Id/status">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn-outline py-1 px-3">@(tenant.Status == "active" ? "Suspender" : "Ativar")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="card p-6">
+    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">admin_panel_settings</span> Tenant Admins</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        @foreach (var admin in tenantAdmins)
+        {
+            <div class="border border-outline-variant rounded-xl p-4">
+                <p class="font-bold text-primary-container">@admin.FullName</p>
+                <p class="text-sm text-on-surface-variant">@admin.Email</p>
+                <p class="text-xs text-secondary mt-2">@(admin.Tenant?.Name ?? "—")</p>
+            </div>
+        }
+    </div>
+</section>

@@ -23,12 +23,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("TenantAdmin", p => p.RequireRole("TenantAdmin", "SystemAdmin"));
     options.AddPolicy("Manager", p => p.RequireRole("Manager", "TenantAdmin", "SystemAdmin"));
     options.AddPolicy("Employee", p => p.RequireRole("Employee", "Manager", "TenantAdmin", "SystemAdmin"));
+    options.AddPolicy("Viewer", p => p.RequireRole("Viewer", "TenantAdmin", "SystemAdmin"));
 });
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<EnterpriseSchemaService>();
+builder.Services.AddScoped<PlatformBootstrapService>();
 
 builder.Services.AddSession(options =>
 {
@@ -57,11 +60,11 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Auto-migrate on startup (runs in both dev and prod via Docker)
+// Auto-migrate, self-heal enterprise schema, and seed the masked platform admin.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    var bootstrap = scope.ServiceProvider.GetRequiredService<PlatformBootstrapService>();
+    await bootstrap.EnsureAsync();
 }
 
 app.Run();

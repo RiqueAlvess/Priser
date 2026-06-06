@@ -1,0 +1,244 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Enterprise Suite – Priser";
+    var tenant = ViewBag.Tenant as Tenant;
+    var compliance = ViewBag.Compliance as ComplianceSetting;
+    var flags = ViewBag.FeatureFlags as List<FeatureFlag> ?? new List<FeatureFlag>();
+    var pools = ViewBag.PointPools as List<PointPool> ?? new List<PointPool>();
+    var integrations = ViewBag.Integrations as List<Integration> ?? new List<Integration>();
+    var automations = ViewBag.AutomationRules as List<AutomationRule> ?? new List<AutomationRule>();
+    var badges = ViewBag.Badges as List<Badge> ?? new List<Badge>();
+    var reports = ViewBag.Reports as List<Report> ?? new List<Report>();
+    decimal pointsLiability = ViewBag.PointsLiability is decimal liability ? liability : 0;
+    decimal burnRate = ViewBag.BurnRate is decimal burn ? burn : 0;
+    var primaryColor = tenant?.PrimaryColor ?? "#0b1b3d";
+    var accentColor = tenant?.AccentColor ?? "#00A3E0";
+    var encryptionMode = compliance?.EncryptionMode ?? "application";
+    var encryptionModes = new[]
+    {
+        new { Value = "application", Label = "Aplicação" },
+        new { Value = "database", Label = "Banco" },
+        new { Value = "hybrid", Label = "Híbrido" }
+    };
+}
+
+<header class="mb-8">
+    <p class="text-secondary font-semibold uppercase tracking-wide text-sm">Awardco-like Enterprise Suite</p>
+    <h1 class="text-3xl font-bold text-primary-container mt-1">Governança, automações, gamificação e BI</h1>
+    <p class="text-on-surface-variant mt-2 max-w-4xl">
+        Camada enterprise sem integrações externas reais: SSO/HRIS/marketplace são stubs governados por feature flags,
+        mantendo isolamento por tenant, trilha de auditoria e tabelas preparadas para automações, memory books e analytics.
+    </p>
+</header>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase">Liability em pontos</p>
+        <p class="text-2xl font-bold text-primary-container mt-2">@pointsLiability.ToString("N0")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase">Burn rate 30 dias</p>
+        <p class="text-2xl font-bold text-primary-container mt-2">@burnRate.ToString("N0")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase">Feature flags</p>
+        <p class="text-2xl font-bold text-primary-container mt-2">@flags.Count(f => f.IsEnabled)/@flags.Count</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase">Automações</p>
+        <p class="text-2xl font-bold text-primary-container mt-2">@automations.Count(r => r.IsActive)</p>
+    </div>
+</div>
+
+
+<section class="card p-6 mb-6">
+    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">storefront</span> Identidade da empresa</h2>
+    <form method="post" action="/admin/enterprise/branding" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+        @Html.AntiForgeryToken()
+        <label class="block text-sm font-medium md:col-span-1">Nome
+            <input name="name" value="@(tenant?.Name ?? "")" required class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium md:col-span-2">Logo URL
+            <input name="logoUrl" type="url" value="@(tenant?.LogoUrl ?? "")" placeholder="https://.../logo.png" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium">Cor primária
+            <input name="primaryColor" value="@primaryColor" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium">Cor destaque
+            <input name="accentColor" value="@accentColor" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+        </label>
+        <div class="md:col-span-5 flex items-center justify-between gap-4">
+            <p class="text-xs text-on-surface-variant">O logo é exibido no menu após o próximo login do usuário.</p>
+            <button class="btn-primary">Salvar identidade</button>
+        </div>
+    </form>
+</section>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">policy</span> Compliance e segurança</h2>
+        <form method="post" action="/admin/enterprise/compliance" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="block text-sm font-medium">Retenção de dados (dias)
+                    <input name="dataRetentionDays" type="number" value="@(compliance?.DataRetentionDays ?? 2555)" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+                </label>
+                <label class="block text-sm font-medium">Retenção de auditoria (dias)
+                    <input name="auditRetentionDays" type="number" value="@(compliance?.AuditRetentionDays ?? 2555)" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2" />
+                </label>
+                <label class="block text-sm font-medium">Modo de criptografia
+                    <select name="encryptionMode" class="mt-1 w-full border border-outline-variant rounded-lg px-3 py-2">
+                        @foreach (var mode in encryptionModes)
+                        {
+                            if (mode.Value == encryptionMode)
+                            {
+                                <option value="@mode.Value" selected>@mode.Label</option>
+                            }
+                            else
+                            {
+                                <option value="@mode.Value">@mode.Label</option>
+                            }
+                        }
+                    </select>
+                </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <label class="flex items-center gap-2"><input type="checkbox" name="ssoEnforced" value="true" checked="@(compliance?.SsoEnforced == true)" /> SSO obrigatório</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="mfaRequired" value="true" checked="@(compliance?.MfaRequired == true)" /> MFA obrigatório</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="immutableBackupsEnabled" value="true" checked="@(compliance?.ImmutableBackupsEnabled != false)" /> Backups imutáveis</label>
+            </div>
+            <button class="btn-primary">Salvar compliance</button>
+        </form>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">toggle_on</span> Feature flags</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            @foreach (var flag in flags)
+            {
+                <form method="post" action="/admin/enterprise/feature-flags/toggle" class="border border-outline-variant rounded-xl p-3 flex items-center justify-between gap-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@flag.Id" />
+                    <div>
+                        <p class="font-semibold text-sm">@flag.Key</p>
+                        <p class="text-xs text-on-surface-variant">@(flag.IsEnabled ? "Ativo" : "Inativo")</p>
+                    </div>
+                    <button class="px-3 py-1 rounded-full text-xs font-bold @(flag.IsEnabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600")">
+                        @(flag.IsEnabled ? "ON" : "OFF")
+                    </button>
+                </form>
+            }
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">account_balance</span> Point pools</h2>
+        <form method="post" action="/admin/enterprise/point-pools/create" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            @Html.AntiForgeryToken()
+            <input name="name" placeholder="Nome do pool" required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <input name="balance" type="number" step="1" placeholder="Saldo inicial" required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <button class="btn-primary">Criar</button>
+        </form>
+        <div class="space-y-2">
+            @foreach (var pool in pools)
+            {
+                <div class="flex justify-between border border-outline-variant rounded-lg p-3 text-sm">
+                    <span>@pool.Name</span><strong>@pool.Balance.ToString("N0") @pool.Currency</strong>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">sync_alt</span> Integrações simuladas</h2>
+        <form method="post" action="/admin/enterprise/integrations/create" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            @Html.AntiForgeryToken()
+            <input name="provider" placeholder="Okta, Azure AD, HRIS..." required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <select name="integrationType" class="border border-outline-variant rounded-lg px-3 py-2">
+                <option value="sso">SSO</option>
+                <option value="hris">HRIS</option>
+                <option value="marketplace">Marketplace</option>
+                <option value="notification">Slack/Teams</option>
+            </select>
+            <button class="btn-primary">Registrar stub</button>
+        </form>
+        <div class="space-y-2">
+            @foreach (var integration in integrations)
+            {
+                <div class="border border-outline-variant rounded-lg p-3 text-sm flex justify-between">
+                    <span>@integration.Provider (@integration.IntegrationType)</span>
+                    <span class="text-secondary font-semibold">@integration.Status</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">auto_awesome</span> Automações e marcos</h2>
+        <form method="post" action="/admin/enterprise/automation-rules/create" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+            @Html.AntiForgeryToken()
+            <input name="name" placeholder="Nome" required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <select name="triggerType" class="border border-outline-variant rounded-lg px-3 py-2">
+                <option value="anniversary">Aniversário de empresa</option>
+                <option value="birthday">Aniversário</option>
+                <option value="recognition_threshold">Meta de reconhecimento</option>
+            </select>
+            <input name="scheduleCron" value="0 8 * * *" class="border border-outline-variant rounded-lg px-3 py-2" />
+            <input name="rewardPoints" type="number" value="100" class="border border-outline-variant rounded-lg px-3 py-2" />
+            <button class="btn-primary md:col-span-4">Criar automação</button>
+        </form>
+        <ul class="space-y-2 text-sm">
+            @foreach (var rule in automations)
+            {
+                <li class="border border-outline-variant rounded-lg p-3">@rule.Name — @rule.TriggerType — @rule.ScheduleCron</li>
+            }
+        </ul>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">military_tech</span> Gamificação</h2>
+        <form method="post" action="/admin/enterprise/badges/create" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            @Html.AntiForgeryToken()
+            <input name="name" placeholder="Badge" required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <input name="description" placeholder="Descrição" class="border border-outline-variant rounded-lg px-3 py-2" />
+            <input name="iconUrl" placeholder="Ícone URL" class="border border-outline-variant rounded-lg px-3 py-2" />
+            <button class="btn-primary md:col-span-3">Criar badge</button>
+        </form>
+        <div class="flex flex-wrap gap-2">
+            @foreach (var badge in badges)
+            {
+                <span class="px-3 py-1 rounded-full bg-secondary-container text-primary-container text-sm font-semibold">@badge.Name</span>
+            }
+        </div>
+    </section>
+
+    <section class="card p-6 xl:col-span-2">
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">analytics</span> Relatórios e BI</h2>
+        <form method="post" action="/admin/enterprise/reports/create" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+            @Html.AntiForgeryToken()
+            <input name="name" placeholder="Nome do relatório" required class="border border-outline-variant rounded-lg px-3 py-2" />
+            <select name="reportType" class="border border-outline-variant rounded-lg px-3 py-2">
+                <option value="engagement_network">Network graph</option>
+                <option value="culture_radar">Radar cultural</option>
+                <option value="issuance_vs_redemption">Emissão vs resgate</option>
+                <option value="burn_rate_liability">Burn rate/liability</option>
+                <option value="engagement_heatmap">Heatmap de engajamento</option>
+            </select>
+            <select name="visibility" class="border border-outline-variant rounded-lg px-3 py-2">
+                <option value="private">Privado</option>
+                <option value="tenant_admins">Admins</option>
+                <option value="managers">Managers</option>
+            </select>
+            <button class="btn-primary">Salvar</button>
+        </form>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            @foreach (var report in reports)
+            {
+                <div class="border border-outline-variant rounded-lg p-3">
+                    <p class="font-semibold">@report.Name</p>
+                    <p class="text-on-surface-variant">@report.ReportType · @report.Visibility</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>

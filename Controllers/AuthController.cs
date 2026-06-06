@@ -148,6 +148,8 @@ public class AuthController(AppDbContext db, WalletService wallets) : Controller
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Role, role),
             new("tenant_id", user.TenantId.ToString()),
+            new("tenant_logo_url", user.Tenant.LogoUrl ?? ""),
+            new("tenant_name", user.Tenant.Name),
         };
         var identity = new ClaimsIdentity(claims, "PriserCookies");
         await HttpContext.SignInAsync("PriserCookies", new ClaimsPrincipal(identity));
