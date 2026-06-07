@@ -113,9 +113,51 @@
         <nav class="flex-1 px-3 space-y-1">
             @if (User.IsInRole("SystemAdmin"))
             {
-                <!-- System Admin opera somente no painel de plataforma, sem acesso às telas de tenant -->
-                <a href="/system" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "System" ? "active" : "")">
-                    <span class="ms">corporate_fare</span> Sistema
+                @{
+                    var sysAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+                    bool IsSysActive(string a) => sysAction.Equals(a, StringComparison.OrdinalIgnoreCase);
+                }
+                <p class="px-4 text-xs text-white/40 uppercase tracking-wider mb-1">Visão Geral</p>
+                <a href="/system" class="sidebar-link @(IsSysActive("Index") ? "active" : "")">
+                    <span class="ms">dashboard</span> Dashboard
+                </a>
+
+                <p class="px-4 text-xs text-white/40 uppercase tracking-wider mt-3 mb-1">Clientes</p>
+                <a href="/system/tenants" class="sidebar-link @(IsSysActive("Tenants") || IsSysActive("TenantDetail") ? "active" : "")">
+                    <span class="ms">corporate_fare</span> Tenants
+                </a>
+                <a href="/system/plans" class="sidebar-link @(IsSysActive("Plans") ? "active" : "")">
+                    <span class="ms">layers</span> Planos
+                </a>
+                <a href="/system/billing" class="sidebar-link @(IsSysActive("Billing") ? "active" : "")">
+                    <span class="ms">receipt_long</span> Cobrança
+                </a>
+
+                <p class="px-4 text-xs text-white/40 uppercase tracking-wider mt-3 mb-1">Plataforma</p>
+                <a href="/system/catalog" class="sidebar-link @(IsSysActive("Catalog") ? "active" : "")">
+                    <span class="ms">category</span> Catálogo global
+                </a>
+                <a href="/system/integrations" class="sidebar-link @(IsSysActive("Integrations") ? "active" : "")">
+                    <span class="ms">hub</span> Integrações
+                </a>
+                <a href="/system/communications" class="sidebar-link @(IsSysActive("Communications") ? "active" : "")">
+                    <span class="ms">mark_email_read</span> Comunicações
+                </a>
+
+                <p class="px-4 text-xs text-white/40 uppercase tracking-wider mt-3 mb-1">Operações</p>
+                <a href="/system/support" class="sidebar-link @(IsSysActive("Support") ? "active" : "")">
+                    <span class="ms">support_agent</span> Suporte
+                </a>
+                <a href="/system/audit" class="sidebar-link @(IsSysActive("Audit") ? "active" : "")">
+                    <span class="ms">policy</span> Auditoria
+                </a>
+                <a href="/system/health" class="sidebar-link @(IsSysActive("Health") ? "active" : "")">
+                    <span class="ms">monitor_heart</span> Saúde do sistema
+                </a>
+
+                <p class="px-4 text-xs text-white/40 uppercase tracking-wider mt-3 mb-1">Config</p>
+                <a href="/system/settings" class="sidebar-link @(IsSysActive("Settings") ? "active" : "")">
+                    <span class="ms">settings</span> Configurações
                 </a>
             }
             else

@@ -1,0 +1,146 @@
+@{
+    ViewBag.Title = "Comunicações — Priser System";
+
+    var templates = new[]
+    {
+        new { Id = "welcome", Category = "Onboarding", Label = "Boas-vindas ao tenant", Subject = "Bem-vindo(a) ao Priser, {firstName}!", Trigger = "Novo usuário criado", TenantEditable = true, Active = true, LastModified = "15/05/2025" },
+        new { Id = "recognition_received", Category = "Reconhecimento", Label = "Você foi reconhecido(a)!", Subject = "{senderName} te reconheceu na Priser 🎉", Trigger = "Reconhecimento recebido", TenantEditable = true, Active = true, LastModified = "22/04/2025" },
+        new { Id = "recognition_approved", Category = "Reconhecimento", Label = "Reconhecimento aprovado", Subject = "Seu reconhecimento foi aprovado!", Trigger = "Aprovação de reconhecimento", TenantEditable = true, Active = true, LastModified = "10/04/2025" },
+        new { Id = "recognition_rejected", Category = "Reconhecimento", Label = "Reconhecimento reprovado", Subject = "Atualização sobre seu reconhecimento", Trigger = "Rejeição de reconhecimento", TenantEditable = false, Active = true, LastModified = "10/04/2025" },
+        new { Id = "points_received", Category = "Wallet", Label = "Créditos recebidos", Subject = "{amount} pontos adicionados à sua carteira", Trigger = "Depósito de créditos", TenantEditable = true, Active = true, LastModified = "01/05/2025" },
+        new { Id = "points_expiring", Category = "Wallet", Label = "Pontos prestes a vencer", Subject = "Seus pontos vencem em {days} dias!", Trigger = "Aviso de expiração (agendado)", TenantEditable = false, Active = true, LastModified = "01/04/2025" },
+        new { Id = "order_confirmed", Category = "Marketplace", Label = "Pedido confirmado", Subject = "Pedido #{orderId} confirmado!", Trigger = "Pedido no marketplace", TenantEditable = true, Active = true, LastModified = "05/05/2025" },
+        new { Id = "survey_invite", Category = "Surveys", Label = "Convite para pesquisa", Subject = "Sua opinião importa — responda a pesquisa", Trigger = "Publicação de survey", TenantEditable = true, Active = true, LastModified = "20/04/2025" },
+        new { Id = "tenant_suspended", Category = "Sistema", Label = "Tenant suspenso", Subject = "[PRISER] Acesso suspenso — {tenantName}", Trigger = "Suspensão de tenant (SysAdmin)", TenantEditable = false, Active = true, LastModified = "01/03/2025" },
+        new { Id = "password_reset", Category = "Segurança", Label = "Redefinição de senha", Subject = "Redefinição de senha na Priser", Trigger = "Reset de senha solicitado", TenantEditable = false, Active = true, LastModified = "01/03/2025" },
+    };
+
+    var categories = templates.Select(t => t.Category).Distinct().OrderBy(c => c).ToArray();
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Comunicações</h1>
+    <p class="text-on-surface-variant mt-1">Templates de e-mail transacionais — controle de edição por tenant</p>
+</header>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Templates ativos</p>
+        <p class="text-3xl font-bold text-primary-container">@templates.Count(t => t.Active)</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Editáveis pelo tenant</p>
+        <p class="text-3xl font-bold text-secondary">@templates.Count(t => t.TenantEditable)</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Bloqueados (SysAdmin)</p>
+        <p class="text-3xl font-bold text-error">@templates.Count(t => !t.TenantEditable)</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Categorias</p>
+        <p class="text-3xl font-bold text-primary-container">@categories.Length</p>
+    </div>
+</div>
+
+<!-- Lista de templates por categoria -->
+@foreach (var cat in categories)
+{
+    var catTemplates = templates.Where(t => t.Category == cat).ToArray();
+    <section class="card p-6 mb-5">
+        <h2 class="text-base font-bold text-on-surface-variant uppercase tracking-wide mb-4">@cat</h2>
+        <div class="space-y-3">
+            @foreach (var tpl in catTemplates)
+            {
+                <div class="flex items-center gap-4 p-4 border border-outline-variant rounded-xl hover:border-secondary/40 transition-colors">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="font-semibold text-primary-container text-sm">@tpl.Label</h3>
+                            @if (tpl.TenantEditable)
+                            {
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">editável pelo tenant</span>
+                            }
+                            else
+                            {
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">bloqueado</span>
+                            }
+                            @if (tpl.Active)
+                            {
+                                <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> ativo
+                                </span>
+                            }
+                        </div>
+                        <p class="text-xs text-on-surface-variant mb-1">
+                            <span class="font-semibold">Assunto:</span> @tpl.Subject
+                        </p>
+                        <p class="text-xs text-on-surface-variant">
+                            <span class="font-semibold">Gatilho:</span> @tpl.Trigger
+                            <span class="ml-3 text-outline">· Modificado: @tpl.LastModified</span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="openTemplateModal('@tpl.Id', '@tpl.Label', @(tpl.TenantEditable ? "true" : "false"), @(tpl.Active ? "true" : "false"))"
+                                class="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant" title="Editar">
+                            <span class="ms text-[18px]">edit</span>
+                        </button>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" @(tpl.Active ? "checked" : "") class="sr-only peer" onchange="toggleTemplate('@tpl.Id', this.checked)" />
+                            <div class="w-9 h-4 bg-gray-200 rounded-full peer peer-checked:bg-secondary after:absolute after:top-0 after:left-0 after:bg-white after:rounded-full after:h-4 after:w-4 after:border after:border-gray-300 after:transition-all peer-checked:after:translate-x-5"></div>
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- Modal: Editar template -->
+<div id="modal-template" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 id="modal-tpl-title" class="text-lg font-bold text-primary-container">Editar template</h3>
+            <button onclick="document.getElementById('modal-template').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Assunto do e-mail</label>
+                <input type="text" id="tpl-subject" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Corpo do e-mail (HTML)</label>
+                <textarea id="tpl-body" rows="8" placeholder="<h1>Olá {firstName},</h1><p>Você foi reconhecido(a)...</p>"
+                          class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary font-mono resize-y"></textarea>
+                <p class="text-xs text-on-surface-variant mt-1">Variáveis disponíveis: {firstName}, {lastName}, {tenantName}, {senderName}, {amount}, {days}, {orderId}</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="tpl-tenant-editable" class="accent-secondary" />
+                    <span class="text-sm font-semibold">Permitir edição pelo Tenant Admin</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="tpl-active" checked class="accent-secondary" />
+                    <span class="text-sm font-semibold">Ativo</span>
+                </label>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-template').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="button" onclick="alert('Template salvo! (simulação)'); document.getElementById('modal-template').classList.add('hidden')" class="btn-primary flex-1">Salvar template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openTemplateModal(id, label, tenantEditable, active) {
+    document.getElementById('modal-tpl-title').textContent = 'Editar — ' + label;
+    document.getElementById('tpl-tenant-editable').checked = tenantEditable === 'true';
+    document.getElementById('tpl-active').checked = active === 'true';
+    document.getElementById('modal-template').classList.remove('hidden');
+}
+function toggleTemplate(id, active) {
+    console.log('Template', id, active ? 'ativo' : 'inativo');
+}
+</script>
+}

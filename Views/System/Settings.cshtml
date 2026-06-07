@@ -1,0 +1,217 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Configurações — Priser System";
+    var sysAdmins = ViewBag.SysAdmins as List<User> ?? new List<User>();
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Configurações</h1>
+    <p class="text-on-surface-variant mt-1">Parâmetros globais, segurança, localização e gestão de SysAdmins</p>
+</header>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+    <!-- Moeda e Pontos -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">currency_exchange</span> Moeda e Pontos
+        </h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Nome do ponto (singular)</label>
+                <input type="text" value="Ponto Priser" placeholder="Ex: Coin, Star, PP..." class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Abreviação</label>
+                <input type="text" value="PP" placeholder="Ex: PP, XP, Coin" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Moeda base da plataforma</label>
+                <select class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option selected>USD — Dólar americano</option>
+                    <option>BRL — Real brasileiro</option>
+                    <option>EUR — Euro</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Taxa de conversão (1 PP = USD)</label>
+                <input type="number" value="0.01" step="0.001" min="0.001" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                <p class="text-xs text-on-surface-variant mt-1">Base para todos os cálculos de recompensa e billing.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Expiração de pontos (dias, 0 = nunca)</label>
+                <input type="number" value="365" min="0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <button onclick="alert('Configurações de pontos salvas! (simulação)')" class="btn-primary">Salvar</button>
+        </div>
+    </section>
+
+    <!-- Segurança -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">security</span> Segurança
+        </h2>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 border border-outline-variant rounded-xl">
+                <div>
+                    <p class="text-sm font-semibold text-primary-container">MFA obrigatório para SysAdmin</p>
+                    <p class="text-xs text-on-surface-variant">Todos os SysAdmins precisam ter MFA ativo</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer" />
+                    <div class="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-secondary after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">JWT TTL (minutos)</label>
+                <input type="number" value="30" min="5" max="1440" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Rate limit (req/min por IP)</label>
+                <input type="number" value="120" min="10" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Tentativas máx. de login</label>
+                <input type="number" value="5" min="3" max="20" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                <p class="text-xs text-on-surface-variant mt-1">Após este número, o usuário é bloqueado por 15 minutos.</p>
+            </div>
+            <div class="flex items-center justify-between p-3 border border-outline-variant rounded-xl">
+                <div>
+                    <p class="text-sm font-semibold text-primary-container">Modo manutenção</p>
+                    <p class="text-xs text-on-surface-variant">Bloqueia acesso de todos os não-SysAdmin</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" />
+                    <div class="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-error after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+            </div>
+            <button onclick="alert('Configurações de segurança salvas! (simulação)')" class="btn-primary">Salvar</button>
+        </div>
+    </section>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+    <!-- Localização -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">language</span> Localização
+        </h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Idioma padrão da plataforma</label>
+                <select class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option selected>pt-BR — Português (Brasil)</option>
+                    <option>en-US — English (US)</option>
+                    <option>es-ES — Español</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Fuso horário padrão</label>
+                <select class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option selected>America/Sao_Paulo (UTC-3)</option>
+                    <option>America/New_York (UTC-5)</option>
+                    <option>Europe/London (UTC+0)</option>
+                    <option>Asia/Tokyo (UTC+9)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Formato de data</label>
+                <select class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    <option selected>DD/MM/YYYY</option>
+                    <option>MM/DD/YYYY</option>
+                    <option>YYYY-MM-DD</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Idiomas habilitados para tenants</label>
+                <div class="space-y-2">
+                    @foreach (var lang in new[] { ("pt-BR", "Português (Brasil)", true), ("en-US", "English (US)", true), ("es-ES", "Español", false) })
+                    {
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked="@lang.Item3" class="accent-secondary" />
+                            <span class="text-sm">@lang.Item2 <span class="text-xs text-on-surface-variant font-mono">(@lang.Item1)</span></span>
+                        </label>
+                    }
+                </div>
+            </div>
+            <button onclick="alert('Localização salva! (simulação)')" class="btn-primary">Salvar</button>
+        </div>
+    </section>
+
+    <!-- Usuários SysAdmin -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">admin_panel_settings</span> SysAdmins (@sysAdmins.Count)
+        </h2>
+
+        <div class="space-y-2 mb-5">
+            @foreach (var admin in sysAdmins)
+            {
+                <div class="flex items-center gap-3 p-3 border border-outline-variant rounded-xl">
+                    <div class="w-9 h-9 rounded-full bg-primary-container text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        @admin.FirstName[0].ToString().ToUpper()
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-primary-container">@admin.FullName</p>
+                        <p class="text-xs text-on-surface-variant">@admin.Email</p>
+                    </div>
+                    @if (admin.Status == "active")
+                    {
+                        <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> ativo
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> inativo
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+
+        <button onclick="document.getElementById('modal-new-admin').classList.remove('hidden')"
+                class="w-full btn-outline flex items-center justify-center gap-2">
+            <span class="ms text-[16px]">person_add</span> Adicionar SysAdmin
+        </button>
+    </section>
+</div>
+
+<!-- Modal: Novo SysAdmin -->
+<div id="modal-new-admin" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Novo SysAdmin</h3>
+            <button onclick="document.getElementById('modal-new-admin').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <form method="post" action="/system/settings/sysadmin/create" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Nome *</label>
+                    <input name="firstName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Sobrenome *</label>
+                    <input name="lastName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Email *</label>
+                <input name="email" type="email" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Senha (opcional)</label>
+                <input name="password" type="password" placeholder="Gerada automaticamente se vazia" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-800 flex items-start gap-2">
+                <span class="ms text-[16px]">warning</span>
+                SysAdmins têm acesso total à plataforma. Crie apenas para membros da equipe Priser.
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-new-admin').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Criar SysAdmin</button>
+            </div>
+        </form>
+    </div>
+</div>

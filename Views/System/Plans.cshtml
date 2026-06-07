@@ -1,0 +1,194 @@
+@{
+    ViewBag.Title = "Planos — Priser System";
+    var planCounts = ViewBag.PlanCounts as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    int CountFor(string plan) => (int?)planCounts.FirstOrDefault(p => (string)p.Plan == plan)?.Count ?? 0;
+
+    var plans = new[]
+    {
+        new {
+            Key = "starter", Label = "Starter", Price = 99m, Color = "border-gray-300",
+            Badge = "bg-gray-100 text-gray-700", BadgeText = "ativo",
+            MaxSeats = 50, MaxTypes = 2,
+            Features = new[] { "Até 50 usuários", "2 tipos de programa", "SSO / HRIS", "Suporte por email" },
+            Integrations = new[] { "SSO básico", "HRIS" },
+            CreditPacks = new[] { "10k PP — $90", "25k PP — $200", "50k PP — $350" },
+            Trial = "14 dias"
+        },
+        new {
+            Key = "growth", Label = "Growth", Price = 299m, Color = "border-secondary",
+            Badge = "bg-indigo-100 text-indigo-700", BadgeText = "popular",
+            MaxSeats = 200, MaxTypes = 4,
+            Features = new[] { "Até 200 usuários", "4 tipos de programa", "SSO Google + Slack/Teams", "Relatórios avançados" },
+            Integrations = new[] { "SSO Google", "Slack", "Teams", "HRIS" },
+            CreditPacks = new[] { "50k PP — $450", "100k PP — $850", "250k PP — $1.800" },
+            Trial = "14 dias"
+        },
+        new {
+            Key = "business", Label = "Business", Price = 799m, Color = "border-blue-400",
+            Badge = "bg-blue-100 text-blue-700", BadgeText = "ativo",
+            MaxSeats = 1000, MaxTypes = 999,
+            Features = new[] { "Até 1.000 usuários", "Todos os programas", "HRIS + API pública", "SLA garantido" },
+            Integrations = new[] { "HRIS full", "API pública", "SSO Enterprise", "Slack", "Teams", "Stripe" },
+            CreditPacks = new[] { "100k PP — $850", "500k PP — $3.800", "1M PP — $7.000" },
+            Trial = "30 dias"
+        },
+        new {
+            Key = "enterprise", Label = "Enterprise", Price = 1999m, Color = "border-purple-400",
+            Badge = "bg-purple-100 text-purple-700", BadgeText = "custom",
+            MaxSeats = 99999, MaxTypes = 999,
+            Features = new[] { "Usuários ilimitados", "Todos os programas", "Contrato dedicado", "CSM dedicado" },
+            Integrations = new[] { "Tudo incluído", "Integrações custom", "SLA 99.9%" },
+            CreditPacks = new[] { "Custom" },
+            Trial = "Sob consulta"
+        },
+    };
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Planos</h1>
+    <p class="text-on-surface-variant mt-1">Configuração dos planos disponíveis para contratação</p>
+</header>
+
+<!-- Cards dos planos -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
+    @foreach (var plan in plans)
+    {
+        var count = CountFor(plan.Key);
+        <div class="card p-6 border-2 @plan.Color relative">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-primary-container">@plan.Label</h2>
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full @plan.Badge">@plan.BadgeText</span>
+            </div>
+            <p class="text-3xl font-bold text-primary-container mb-0.5">$@plan.Price.ToString("N0")<span class="text-base font-normal text-on-surface-variant">/mês</span></p>
+            <p class="text-xs text-on-surface-variant mb-4">@count tenant(s) neste plano</p>
+
+            <div class="space-y-2 mb-5">
+                @foreach (var f in plan.Features)
+                {
+                    <div class="flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2">
+                        <span class="ms text-[16px] text-secondary">check</span>
+                        <span class="text-sm">@f</span>
+                    </div>
+                }
+            </div>
+
+            <button onclick="openPlanModal('@plan.Key', '@plan.Label', '@plan.MaxSeats', '@plan.MaxTypes', '@plan.Trial')"
+                    class="w-full btn-outline text-sm py-2">
+                Configurar
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Tabela comparativa de configurações -->
+<section class="card p-6 mb-8">
+    <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+        <span class="ms">tune</span> O que é configurável em cada plano
+    </h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr>
+                    <th class="text-left px-4 py-3">Parâmetro</th>
+                    <th class="text-center px-4 py-3">Starter</th>
+                    <th class="text-center px-4 py-3">Growth</th>
+                    <th class="text-center px-4 py-3">Business</th>
+                    <th class="text-center px-4 py-3">Enterprise</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                @{
+                    var rows = new[]
+                    {
+                        ("Limite de usuários ativos", "50", "200", "1.000", "Ilimitado"),
+                        ("Tipos de programa habilitados", "2", "4", "Todos", "Todos"),
+                        ("SSO", "Básico", "Google", "Enterprise", "Custom"),
+                        ("HRIS", "✓", "✓", "Full", "Full"),
+                        ("Slack / Teams", "—", "✓", "✓", "✓"),
+                        ("API pública", "—", "—", "✓", "✓"),
+                        ("Trial", "14 dias", "14 dias", "30 dias", "Sob consulta"),
+                        ("SLA", "—", "—", "99.5%", "99.9%"),
+                        ("CSM dedicado", "—", "—", "—", "✓"),
+                    };
+                }
+                @foreach (var (label, s, g, b, e) in rows)
+                {
+                    <tr class="hover:bg-surface-container-low">
+                        <td class="px-4 py-3 font-medium text-primary-container">@label</td>
+                        <td class="px-4 py-3 text-center text-on-surface-variant">@s</td>
+                        <td class="px-4 py-3 text-center text-on-surface-variant">@g</td>
+                        <td class="px-4 py-3 text-center text-on-surface-variant">@b</td>
+                        <td class="px-4 py-3 text-center text-on-surface-variant">@e</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Pacotes de crédito por plano -->
+<section class="card p-6">
+    <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+        <span class="ms">toll</span> Pacotes de crédito disponíveis por plano
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        @foreach (var plan in plans)
+        {
+            <div class="bg-surface-container-low rounded-xl p-4">
+                <h3 class="font-bold text-primary-container mb-3">@plan.Label</h3>
+                <div class="space-y-1.5">
+                    @foreach (var pack in plan.CreditPacks)
+                    {
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="ms text-[14px] text-secondary">toll</span>
+                            <span class="text-on-surface-variant">@pack</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Modal de configuração de plano -->
+<div id="modal-plan-config" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 id="modal-plan-title" class="text-lg font-bold text-primary-container">Configurar Plano</h3>
+            <button onclick="document.getElementById('modal-plan-config').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Limite de seats</label>
+                <input id="cfg-seats" type="number" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Tipos de programa</label>
+                <input id="cfg-types" type="number" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Trial (dias)</label>
+                <input id="cfg-trial" type="text" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <p class="text-xs text-on-surface-variant bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                As configurações de plano afetam novos tenants e upgrades. Tenants existentes mantêm o plano contratado até renovação.
+            </p>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-plan-config').classList.add('hidden')" class="btn-outline flex-1">Fechar</button>
+                <button type="button" onclick="alert('Configuração de plano será persistida em breve — feature em construção.'); document.getElementById(\'modal-plan-config\').classList.add(\'hidden\')" class="btn-primary flex-1">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openPlanModal(key, label, seats, types, trial) {
+    document.getElementById('modal-plan-title').textContent = 'Configurar — ' + label;
+    document.getElementById('cfg-seats').value = seats;
+    document.getElementById('cfg-types').value = types;
+    document.getElementById('cfg-trial').value = trial;
+    document.getElementById('modal-plan-config').classList.remove('hidden');
+}
+</script>
+}

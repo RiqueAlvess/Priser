@@ -1,0 +1,141 @@
+@{
+    ViewBag.Title = "Catálogo Global — Priser System";
+
+    var categories = new[]
+    {
+        new { Id = "amazon", Icon = "shopping_bag", Label = "Amazon Business", Desc = "Integração direta. Milhões de produtos sem markup. Fulfillment automático global.", Color = "#FF9900", Bg = "bg-orange-50", Active = true, Markup = 0m, Geo = "Global", Rate = 1m },
+        new { Id = "giftcards", Icon = "card_giftcard", Label = "Gift Cards", Desc = "Milhares de marcas disponíveis. Entrega digital instantânea ao colaborador.", Color = "#00AA44", Bg = "bg-green-50", Active = true, Markup = 5m, Geo = "BR, US, EU", Rate = 1m },
+        new { Id = "travel", Icon = "flight", Label = "Viagens e Experiências", Desc = "Hotéis, voos, experiências. Via parceiros Priceline, Viator e outros.", Color = "#0055AA", Bg = "bg-blue-50", Active = true, Markup = 8m, Geo = "Global", Rate = 1m },
+        new { Id = "donations", Icon = "volunteer_activism", Label = "Doações (Charities)", Desc = "ONGs e causas parceiras. Colaborador doa seus pontos para causas que importam.", Color = "#AA0055", Bg = "bg-pink-50", Active = true, Markup = 0m, Geo = "BR", Rate = 1m },
+        new { Id = "mobileTopup", Icon = "phone_android", Label = "Mobile Top-Up", Desc = "Recarga de celular. Útil para colaboradores de campo sem acesso a banco.", Color = "#005566", Bg = "bg-teal-50", Active = true, Markup = 3m, Geo = "BR, LATAM", Rate = 1m },
+        new { Id = "apay", Icon = "credit_card", Label = "A-Pay (cash-like)", Desc = "Cartão digital ou físico. Colaborador usa os pontos como dinheiro real.", Color = "#AA2200", Bg = "bg-red-50", Active = false, Markup = 2m, Geo = "BR", Rate = 1m },
+    };
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Catálogo global</h1>
+    <p class="text-on-surface-variant mt-1">Recompensas disponíveis para todos os tenants da plataforma</p>
+</header>
+
+<!-- Taxa de conversão global -->
+<section class="card p-6 mb-8">
+    <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+        <span class="ms">currency_exchange</span> Configurações globais de catálogo
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div>
+            <label class="block text-sm font-semibold mb-1.5">Taxa de conversão global (1 PP = ? USD)</label>
+            <div class="flex gap-2">
+                <input type="number" value="0.01" step="0.001" min="0.001" class="flex-1 border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                <button onclick="alert('Taxa salva! (simulação)')" class="btn-primary px-4">Salvar</button>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-1">Base para precificação de todos os catálogos</p>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold mb-1.5">Markup padrão (%)</label>
+            <div class="flex gap-2">
+                <input type="number" value="3" step="0.5" min="0" class="flex-1 border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                <button onclick="alert('Markup salvo! (simulação)')" class="btn-primary px-4">Salvar</button>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-1">Markup aplicado quando categoria não tem configuração própria</p>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold mb-1.5">Moeda base da plataforma</label>
+            <select class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                <option selected>USD — Dólar americano</option>
+                <option>BRL — Real brasileiro</option>
+                <option>EUR — Euro</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<!-- Cards de categorias -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+    @foreach (var cat in categories)
+    {
+        <div class="card p-5 @(cat.Active ? "" : "opacity-60")">
+            <div class="flex items-start justify-between mb-3">
+                <div class="w-12 h-12 rounded-xl @cat.Bg flex items-center justify-center">
+                    <span class="ms text-[24px]" style="color:@cat.Color">@cat.Icon</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" @(cat.Active ? "checked" : "") class="sr-only peer" onchange="toggleCategory('@cat.Id', this.checked)" />
+                        <div class="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-secondary after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                    </label>
+                </div>
+            </div>
+            <h3 class="text-base font-bold text-primary-container mb-1">@cat.Label</h3>
+            <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">@cat.Desc</p>
+
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between items-center bg-surface-container rounded-lg px-3 py-2">
+                    <span class="text-on-surface-variant">Markup</span>
+                    <span class="font-semibold text-primary-container">@cat.Markup%</span>
+                </div>
+                <div class="flex justify-between items-center bg-surface-container rounded-lg px-3 py-2">
+                    <span class="text-on-surface-variant">Restrição geográfica</span>
+                    <span class="font-semibold text-primary-container">@cat.Geo</span>
+                </div>
+                <div class="flex justify-between items-center bg-surface-container rounded-lg px-3 py-2">
+                    <span class="text-on-surface-variant">Taxa conversão PP</span>
+                    <span class="font-semibold text-primary-container">$@cat.Rate.ToString("F3")</span>
+                </div>
+            </div>
+
+            <button onclick="openCatModal('@cat.Id','@cat.Label','@cat.Markup','@cat.Geo','@cat.Rate')"
+                    class="w-full mt-4 btn-outline text-xs py-2">
+                Configurar
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Modal: Configurar categoria -->
+<div id="modal-cat" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 id="modal-cat-title" class="text-lg font-bold text-primary-container">Configurar categoria</h3>
+            <button onclick="document.getElementById('modal-cat').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Markup (%)</label>
+                <input id="cat-markup" type="number" step="0.5" min="0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Taxa de conversão (1 PP = USD)</label>
+                <input id="cat-rate" type="number" step="0.001" min="0.001" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Restrições geográficas</label>
+                <input id="cat-geo" type="text" placeholder="Ex: BR, US, EU (ou Global)" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                <p class="text-xs text-on-surface-variant mt-1">Separar por vírgula. Use "Global" para sem restrição.</p>
+            </div>
+            <p class="text-xs bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-blue-700">
+                As configurações de catálogo se aplicam globalmente. Tenants podem adicionar restrições adicionais em seus próprios planos.
+            </p>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-cat').classList.add('hidden')" class="btn-outline flex-1">Fechar</button>
+                <button type="button" onclick="alert('Configurações salvas! (simulação — persistência em breve)'); document.getElementById('modal-cat').classList.add('hidden')" class="btn-primary flex-1">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openCatModal(id, label, markup, geo, rate) {
+    document.getElementById('modal-cat-title').textContent = 'Configurar — ' + label;
+    document.getElementById('cat-markup').value = markup;
+    document.getElementById('cat-geo').value = geo;
+    document.getElementById('cat-rate').value = rate;
+    document.getElementById('modal-cat').classList.remove('hidden');
+}
+function toggleCategory(id, active) {
+    // Would call API endpoint to persist
+    console.log('Category', id, active ? 'enabled' : 'disabled');
+}
+</script>
+}

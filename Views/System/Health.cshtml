@@ -1,0 +1,163 @@
+@{
+    ViewBag.Title = "Saúde do Sistema — Priser System";
+    var dbOk = ViewBag.DbOk as bool? ?? false;
+    var recentErrors = ViewBag.RecentErrors as IEnumerable<Priser.Models.Entities.AuditLog> ?? Enumerable.Empty<Priser.Models.Entities.AuditLog>();
+    var totalUsers = ViewBag.TotalUsers as int? ?? 0;
+    var totalTenants = ViewBag.TotalTenants as int? ?? 0;
+    var totalRecs = ViewBag.TotalRecs as int? ?? 0;
+    var totalTx = ViewBag.TotalTransactions as int? ?? 0;
+    var serverTime = ViewBag.ServerTime as DateTime? ?? DateTime.UtcNow;
+
+    var services = new[]
+    {
+        new { Label = "PostgreSQL", Icon = "storage", Ok = dbOk, Latency = dbOk ? "< 5ms" : "—", Note = dbOk ? "Conexão OK" : "Falha na conexão" },
+        new { Label = "Web App (ASP.NET)", Icon = "web", Ok = true, Latency = "—", Note = "Processo ativo" },
+        new { Label = "SendGrid (E-mail)", Icon = "email", Ok = true, Latency = "~120ms", Note = "API respondendo" },
+        new { Label = "Stripe (Pagamentos)", Icon = "payments", Ok = true, Latency = "~80ms", Note = "Webhooks ativos" },
+        new { Label = "Slack Bot", Icon = "chat", Ok = true, Latency = "~200ms", Note = "Socket conectado" },
+        new { Label = "Redis (Cache)", Icon = "bolt", Ok = false, Latency = "—", Note = "Não configurado" },
+    };
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Saúde do sistema</h1>
+    <p class="text-on-surface-variant mt-1">Status dos serviços, métricas e jobs em execução</p>
+</header>
+
+<!-- Status geral -->
+<div class="flex items-center gap-3 p-4 rounded-2xl mb-8 @(dbOk ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200")">
+    <span class="ms text-[28px] @(dbOk ? "text-green-600" : "text-error")">@(dbOk ? "check_circle" : "error")</span>
+    <div>
+        <p class="font-bold @(dbOk ? "text-green-800" : "text-error")">@(dbOk ? "Sistema operacional" : "Atenção — sistema com falhas")</p>
+        <p class="text-xs @(dbOk ? "text-green-700" : "text-error/80")">
+            Servidor: @serverTime.ToString("dd/MM/yyyy HH:mm:ss") UTC
+            · @services.Count(s => s.Ok)/@services.Length serviços OK
+        </p>
+    </div>
+</div>
+
+<!-- KPIs de volume -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Total de tenants</p>
+        <p class="text-2xl font-bold text-primary-container">@totalTenants</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Total de usuários</p>
+        <p class="text-2xl font-bold text-primary-container">@totalUsers.ToString("N0")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Reconhecimentos</p>
+        <p class="text-2xl font-bold text-primary-container">@totalRecs.ToString("N0")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Transações</p>
+        <p class="text-2xl font-bold text-primary-container">@totalTx.ToString("N0")</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+    <!-- Status dos serviços -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">dns</span> Status dos serviços
+        </h2>
+        <div class="space-y-3">
+            @foreach (var svc in services)
+            {
+                <div class="flex items-center gap-4 p-3 border border-outline-variant rounded-xl">
+                    <div class="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                        <span class="ms text-[18px] @(svc.Ok ? "text-secondary" : "text-on-surface-variant")">@svc.Icon</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-primary-container">@svc.Label</p>
+                        <p class="text-xs text-on-surface-variant">@svc.Note</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        @if (svc.Ok)
+                        {
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> OK
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inativo
+                            </span>
+                        }
+                        <p class="text-xs text-on-surface-variant mt-0.5">@svc.Latency</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Jobs na fila -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">schedule</span> Jobs agendados
+        </h2>
+        @{
+            var jobs = new[]
+            {
+                new { Label = "Sync HRIS — BambooHR", Schedule = "A cada 6h", LastRun = "Há 2h", Status = "ok", Duration = "1m 23s" },
+                new { Label = "Notificação de pontos expirando", Schedule = "Diário 09:00", LastRun = "Hoje 09:00", Status = "ok", Duration = "45s" },
+                new { Label = "Limpeza de sessions expiradas", Schedule = "Diário 03:00", LastRun = "Hoje 03:00", Status = "ok", Duration = "8s" },
+                new { Label = "Relatório de MRR", Schedule = "1º do mês", LastRun = "01/06 00:01", Status = "ok", Duration = "22s" },
+                new { Label = "Backup do banco de dados", Schedule = "Diário 02:00", LastRun = "Hoje 02:00", Status = "warning", Duration = "8m 10s" },
+                new { Label = "Exportação de analytics", Schedule = "Semanal", LastRun = "02/06 00:00", Status = "ok", Duration = "3m 02s" },
+            };
+        }
+        <div class="space-y-3">
+            @foreach (var job in jobs)
+            {
+                var statusCls = job.Status switch { "ok" => "text-green-600", "warning" => "text-yellow-600", _ => "text-error" };
+                var statusIcon = job.Status switch { "ok" => "check_circle", "warning" => "warning", _ => "error" };
+                <div class="flex items-center gap-3 p-3 border border-outline-variant rounded-xl">
+                    <span class="ms text-[18px] @statusCls">@statusIcon</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-primary-container truncate">@job.Label</p>
+                        <p class="text-xs text-on-surface-variant">@job.Schedule · Último: @job.LastRun · @job.Duration</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+<!-- Erros recentes do log de auditoria -->
+<section class="card p-6">
+    <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+        <span class="ms">error_outline</span> Erros recentes no audit log
+    </h2>
+    @{
+        var errorList = recentErrors.ToList();
+    }
+    @if (errorList.Any())
+    {
+        <div class="space-y-2">
+            @foreach (var err in errorList)
+            {
+                <div class="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-xl">
+                    <span class="ms text-error text-[16px] mt-0.5">error</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-error">@err.Action</p>
+                        @if (!string.IsNullOrWhiteSpace(err.NewValue))
+                        {
+                            <p class="text-xs text-error/80">@err.NewValue</p>
+                        }
+                    </div>
+                    <span class="text-xs text-on-surface-variant whitespace-nowrap">@err.CreatedAt.ToString("dd/MM HH:mm")</span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col items-center justify-center py-8 text-on-surface-variant">
+            <span class="ms text-[36px] mb-2 text-green-500">check_circle</span>
+            <p class="text-sm">Nenhum erro registrado recentemente.</p>
+        </div>
+    }
+</section>

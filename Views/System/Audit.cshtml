@@ -1,0 +1,163 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Auditoria — Priser System";
+    var logs = ViewBag.Logs as List<AuditLog> ?? new List<AuditLog>();
+    var total = ViewBag.Total as int? ?? 0;
+    var page = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var pageSize = ViewBag.PageSize as int? ?? 50;
+    var tenants = ViewBag.Tenants as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var filterTenantId = ViewBag.FilterTenantId as Guid?;
+    var filterAction = ViewBag.FilterAction as string;
+    var filterFrom = ViewBag.FilterFrom as string;
+    var filterTo = ViewBag.FilterTo as string;
+
+    string ActionIcon(string action) => action switch
+    {
+        var a when a.Contains("create") => "add_circle",
+        var a when a.Contains("edit") || a.Contains("update") => "edit",
+        var a when a.Contains("delete") || a.Contains("suspend") => "block",
+        var a when a.Contains("impersonate") => "manage_accounts",
+        var a when a.Contains("credit") => "toll",
+        var a when a.Contains("login") => "login",
+        _ => "bolt"
+    };
+}
+
+<header class="mb-6">
+    <h1 class="text-3xl font-bold text-primary-container">Auditoria</h1>
+    <p class="text-on-surface-variant mt-1">Log imutável de todas as ações na plataforma</p>
+</header>
+
+<!-- Filtros -->
+<section class="card p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[140px]">
+            <label class="block text-xs font-semibold text-on-surface-variant mb-1">Tenant</label>
+            <select name="tenantId" class="w-full border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-secondary">
+                <option value="">Todos os tenants</option>
+                @foreach (var t in tenants)
+                {
+                    <option value="@t.Id" selected="@(filterTenantId?.ToString() == ((Guid)t.Id).ToString())">@t.Name</option>
+                }
+            </select>
+        </div>
+        <div class="flex-1 min-w-[120px]">
+            <label class="block text-xs font-semibold text-on-surface-variant mb-1">Ação</label>
+            <input name="action" value="@filterAction" placeholder="Ex: create, edit..." class="w-full border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-secondary" />
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-on-surface-variant mb-1">De</label>
+            <input name="from" type="date" value="@filterFrom" class="border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-secondary" />
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-on-surface-variant mb-1">Até</label>
+            <input name="to" type="date" value="@filterTo" class="border border-outline-variant rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-secondary" />
+        </div>
+        <button type="submit" class="btn-primary px-4 py-2.5">Filtrar</button>
+        @if (filterTenantId.HasValue || !string.IsNullOrEmpty(filterAction) || !string.IsNullOrEmpty(filterFrom))
+        {
+            <a href="/system/audit" class="btn-outline px-4 py-2.5">Limpar</a>
+        }
+        <a href="/system/audit/export?tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+           class="flex items-center gap-2 border border-outline-variant text-on-surface-variant px-4 py-2.5 rounded-xl text-sm hover:bg-surface-container transition-colors">
+            <span class="ms text-[16px]">download</span> Exportar CSV
+        </a>
+    </form>
+</section>
+
+<!-- Resumo -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-on-surface-variant">
+        <span class="font-semibold text-primary-container">@total.ToString("N0")</span> registros encontrados
+        · Mostrando página @page de @totalPages
+    </p>
+</div>
+
+<!-- Tabela de logs -->
+<section class="card overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr class="text-xs text-on-surface-variant uppercase tracking-wide">
+                    <th class="text-left px-4 py-3">Data/Hora</th>
+                    <th class="text-left px-4 py-3">Tenant</th>
+                    <th class="text-left px-4 py-3">Usuário</th>
+                    <th class="text-left px-4 py-3">Ação</th>
+                    <th class="text-left px-4 py-3">Entidade</th>
+                    <th class="text-left px-4 py-3">Detalhes</th>
+                    <th class="text-left px-4 py-3">IP</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                @foreach (var log in logs)
+                {
+                    <tr class="hover:bg-surface-container-low">
+                        <td class="px-4 py-3 font-mono text-xs text-on-surface-variant whitespace-nowrap">@log.CreatedAt.ToString("dd/MM/yy HH:mm:ss")</td>
+                        <td class="px-4 py-3 text-xs text-on-surface-variant">
+                            @if (log.TenantId.HasValue)
+                            {
+                                var tName = tenants.FirstOrDefault(t => (Guid)t.Id == log.TenantId.Value);
+                                <span>@(tName?.Name ?? log.TenantId.Value.ToString()[..8])</span>
+                            }
+                            else { <span class="text-outline">platform</span> }
+                        </td>
+                        <td class="px-4 py-3 text-xs font-mono text-on-surface-variant">@(log.UserId?.ToString()[..8] ?? "—")</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold">
+                                <span class="ms text-[14px] text-secondary">@ActionIcon(log.Action)</span>
+                                @log.Action
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-xs text-on-surface-variant">
+                            @log.EntityType
+                            @if (log.EntityId.HasValue)
+                            {
+                                <span class="font-mono text-outline">·@log.EntityId.Value.ToString()[..6]</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-xs text-on-surface-variant max-w-xs truncate" title="@log.NewValue">@log.NewValue</td>
+                        <td class="px-4 py-3 text-xs font-mono text-outline">@(log.IpAddress ?? "—")</td>
+                    </tr>
+                }
+                @if (!logs.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="px-4 py-12 text-center text-on-surface-variant">
+                            <span class="ms text-[36px] block mb-2">search_off</span>
+                            Nenhum registro encontrado com os filtros aplicados.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Paginação -->
+@if (totalPages > 1)
+{
+    <div class="flex items-center justify-center gap-2">
+        @if (page > 1)
+        {
+            <a href="/system/audit?page=@(page - 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+               class="px-4 py-2 border border-outline-variant rounded-xl text-sm hover:bg-surface-container transition-colors">
+                ← Anterior
+            </a>
+        }
+        @for (int p = Math.Max(1, page - 2); p <= Math.Min(totalPages, page + 2); p++)
+        {
+            <a href="/system/audit?page=@p&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+               class="px-4 py-2 border rounded-xl text-sm transition-colors @(p == page ? "border-secondary bg-secondary text-white" : "border-outline-variant hover:bg-surface-container")">
+                @p
+            </a>
+        }
+        @if (page < totalPages)
+        {
+            <a href="/system/audit?page=@(page + 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+               class="px-4 py-2 border border-outline-variant rounded-xl text-sm hover:bg-surface-container transition-colors">
+                Próxima →
+            </a>
+        }
+    </div>
+}

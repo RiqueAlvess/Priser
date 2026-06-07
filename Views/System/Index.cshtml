@@ -1,348 +1,170 @@
-@using Priser.Models.Entities
 @{
-    ViewBag.Title = "Sistema – Priser";
-    var tenants = ViewBag.Tenants as List<Tenant> ?? new List<Tenant>();
-    var tenantAdmins = ViewBag.TenantAdmins as List<User> ?? new List<User>();
+    ViewBag.Title = "Dashboard — Priser System";
+    var mrr = ViewBag.MRR as decimal? ?? 0m;
+    var arr = ViewBag.ARR as decimal? ?? 0m;
+    var totalPoints = ViewBag.TotalPoints as decimal? ?? 0m;
+    var totalTenants = ViewBag.TotalTenants as int? ?? 0;
+    var suspendedTenants = ViewBag.SuspendedTenants as int? ?? 0;
+    var totalUsers = ViewBag.TotalUsers as int? ?? 0;
+
+    var recByDay = ViewBag.RecByDay as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var recList = recByDay.ToList();
+    var maxRec = recList.Any() ? (int)recList.Max(r => (int)r.Count) : 1;
+    if (maxRec == 0) maxRec = 1;
+
+    var tenantsAtRisk = ViewBag.TenantsAtRisk as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var recentAudit = ViewBag.RecentAudit as IEnumerable<Priser.Models.Entities.AuditLog> ?? Enumerable.Empty<Priser.Models.Entities.AuditLog>();
 }
 
 <header class="mb-8">
-    <p class="text-secondary font-semibold uppercase tracking-wide text-sm">System Admin</p>
-    <h1 class="text-3xl font-bold text-primary-container mt-1">Gestão de Empresas e Acessos</h1>
-    <p class="text-on-surface-variant mt-2">Crie empresas, defina branding, provisione Tenant Admins e gerencie status de acesso.</p>
+    <h1 class="text-3xl font-bold text-primary-container">Dashboard</h1>
+    <p class="text-on-surface-variant mt-1">Visão consolidada de toda a plataforma Priser</p>
 </header>
 
-<!-- Stats -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<!-- KPIs -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <div class="card p-5">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Empresas ativas</p>
-        <p class="text-3xl font-bold text-primary-container">@tenants.Count(t => t.Status == "active")</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Tenants ativos</p>
+        <p class="text-3xl font-bold text-primary-container">@totalTenants</p>
+        @if (suspendedTenants > 0)
+        {
+            <p class="text-xs text-error mt-1">@suspendedTenants suspenso(s)</p>
+        }
     </div>
     <div class="card p-5">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Empresas suspensas</p>
-        <p class="text-3xl font-bold text-error">@tenants.Count(t => t.Status != "active")</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">MRR</p>
+        <p class="text-3xl font-bold text-primary-container">$@mrr.ToString("N0")</p>
+        <p class="text-xs text-secondary mt-1">ARR $@arr.ToString("N0")</p>
     </div>
     <div class="card p-5">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Tenant Admins</p>
-        <p class="text-3xl font-bold text-primary-container">@tenantAdmins.Count</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Colaboradores</p>
+        <p class="text-3xl font-bold text-primary-container">@totalUsers.ToString("N0")</p>
+        <p class="text-xs text-on-surface-variant mt-1">usuários ativos</p>
     </div>
     <div class="card p-5">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Admins ativos</p>
-        <p class="text-3xl font-bold text-secondary">@tenantAdmins.Count(u => u.Status == "active")</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Créditos emitidos</p>
+        <p class="text-3xl font-bold text-primary-container">@(totalPoints > 1_000_000 ? $"{totalPoints / 1_000_000:N1}M" : totalPoints > 1000 ? $"{totalPoints / 1000:N1}k" : totalPoints.ToString("N0"))</p>
+        <p class="text-xs text-on-surface-variant mt-1">últimos 30 dias</p>
     </div>
 </div>
 
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-    <!-- Nova empresa -->
-    <section class="card p-6 xl:col-span-1">
-        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">add_business</span> Nova empresa</h2>
-        <form method="post" action="/system/tenants/create" class="space-y-4">
-            @Html.AntiForgeryToken()
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Nome da empresa *</label>
-                <input name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-8">
+    <!-- Gráfico de reconhecimentos -->
+    <section class="card p-6 xl:col-span-2">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">bar_chart</span> Reconhecimentos (últimos 7 dias)
+        </h2>
+        @if (recList.Any())
+        {
+            <div class="space-y-2">
+                @foreach (var day in recList)
+                {
+                    var pct = maxRec > 0 ? (int)((int)day.Count * 100 / maxRec) : 0;
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-on-surface-variant w-8">@((DateTime)day.Date).ToString("ddd", new System.Globalization.CultureInfo("pt-BR")).Substring(0,3)</span>
+                        <div class="flex-1 bg-surface-container rounded-full h-6 overflow-hidden">
+                            <div class="h-full rounded-full flex items-center px-2 text-xs text-white font-semibold transition-all" style="width:@(pct < 5 ? 5 : pct)%; background:#00658d">
+                                @if (pct >= 15) { <span>@day.Count</span> }
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold text-primary-container w-8 text-right">@day.Count</span>
+                    </div>
+                }
             </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Slug <span class="text-on-surface-variant font-normal">(gerado automaticamente)</span></label>
-                <input name="slug" placeholder="empresa-cliente" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
-                <input name="logoUrl" type="url" placeholder="https://.../logo.png" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
-                    <input name="primaryColor" value="#0b1b3d" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
-                    <input name="accentColor" value="#00A3E0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Plano</label>
-                <select name="billingPlan" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors">
-                    <option value="trial">Trial</option>
-                    <option value="starter">Starter</option>
-                    <option value="growth">Growth</option>
-                    <option value="enterprise">Enterprise</option>
-                </select>
-            </div>
-
-            <div class="pt-4 border-t border-outline-variant">
-                <h3 class="font-bold text-primary-container mb-3">Primeiro Tenant Admin</h3>
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <input name="adminFirstName" placeholder="Nome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                    <input name="adminLastName" placeholder="Sobrenome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-                <input name="adminEmail" type="email" placeholder="admin@empresa.com" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:border-secondary transition-colors" />
-                <input name="adminPassword" placeholder="Senha (opcional)" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                <p class="text-xs text-on-surface-variant mt-2">Se vazio, uma senha temporária será gerada e exibida após criar.</p>
-            </div>
-            <button class="btn-primary w-full">Criar empresa</button>
-        </form>
+        }
+        else
+        {
+            <p class="text-on-surface-variant text-sm">Sem dados de reconhecimentos ainda.</p>
+        }
     </section>
 
-    <!-- Lista de empresas -->
-    <section class="card p-6 xl:col-span-2">
-        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">corporate_fare</span> Empresas (@tenants.Count)</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead style="background:#f3f4f5">
-                    <tr>
-                        <th class="text-left px-4 py-3">Empresa</th>
-                        <th class="text-left px-4 py-3">Plano</th>
-                        <th class="text-left px-4 py-3">Status</th>
-                        <th class="text-left px-4 py-3">Ações</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-outline-variant">
-                    @foreach (var tenant in tenants)
-                    {
-                        <tr class="hover:bg-surface-container-low transition-colors">
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-3">
-                                    @if (!string.IsNullOrWhiteSpace(tenant.LogoUrl))
+    <!-- Tenants em atenção -->
+    <section class="card p-6 xl:col-span-3">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">warning</span> Tenants em atenção
+        </h2>
+        @{
+            var riskList = tenantsAtRisk.ToList();
+        }
+        @if (riskList.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-xs text-on-surface-variant uppercase tracking-wide">
+                            <th class="text-left pb-2">Tenant</th>
+                            <th class="text-left pb-2">Problema</th>
+                            <th class="text-left pb-2">Risco</th>
+                            <th class="text-left pb-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant">
+                        @foreach (var item in riskList)
+                        {
+                            <tr>
+                                <td class="py-3 font-semibold text-primary-container">@((item.Tenant as Priser.Models.Entities.Tenant)?.Name ?? "—")</td>
+                                <td class="py-3 text-on-surface-variant">@item.Problem</td>
+                                <td class="py-3">
+                                    @if ((string)item.Risk == "alto")
                                     {
-                                        <img src="@tenant.LogoUrl" alt="@tenant.Name" class="w-10 h-10 rounded-lg object-contain bg-white border border-outline-variant" />
+                                        <span class="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">alto</span>
                                     }
                                     else
                                     {
-                                        <div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-sm">@tenant.Name.Substring(0, 1).ToUpper()</div>
+                                        <span class="text-xs font-bold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">médio</span>
                                     }
-                                    <div>
-                                        <p class="font-semibold text-primary-container">@tenant.Name</p>
-                                        <p class="text-xs text-on-surface-variant">@tenant.Slug</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-surface-container text-on-surface-variant capitalize">@tenant.BillingPlan</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                @if (tenant.Status == "active")
-                                {
-                                    <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Suspenso
-                                    </span>
-                                }
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openEditTenant('@tenant.Id','@tenant.Name.Replace("'","\\'")', '@(tenant.LogoUrl ?? "")', '@(tenant.PrimaryColor ?? "#0b1b3d")', '@(tenant.AccentColor ?? "#00A3E0")', '@tenant.BillingPlan')"
-                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant" title="Editar">
-                                        <span class="ms text-[18px]">edit</span>
-                                    </button>
-                                    <form method="post" action="/system/tenants/@tenant.Id/status" class="inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit"
-                                                class="p-2 rounded-lg hover:bg-surface-container transition-colors @(tenant.Status == "active" ? "text-error" : "text-green-600")"
-                                                title="@(tenant.Status == "active" ? "Suspender" : "Ativar")"
-                                                onclick="return confirm('@(tenant.Status == "active" ? "Suspender" : "Ativar") empresa @tenant.Name?')">
-                                            <span class="ms text-[18px]">@(tenant.Status == "active" ? "block" : "check_circle")</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                                </td>
+                                <td class="py-3">
+                                    <a href="/system/tenants/@((item.Tenant as Priser.Models.Entities.Tenant)?.Id)" class="text-xs text-secondary hover:underline">ver →</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="flex flex-col items-center justify-center py-8 text-on-surface-variant">
+                <span class="ms text-[40px] mb-2">check_circle</span>
+                <p class="text-sm">Todos os tenants estão saudáveis</p>
+            </div>
+        }
     </section>
 </div>
 
-<!-- Tenant Admins -->
+<!-- Log de atividade recente -->
 <section class="card p-6">
-    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">admin_panel_settings</span> Tenant Admins (@tenantAdmins.Count)</h2>
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead style="background:#f3f4f5">
-                <tr>
-                    <th class="text-left px-4 py-3">Usuário</th>
-                    <th class="text-left px-4 py-3">Email</th>
-                    <th class="text-left px-4 py-3">Empresa</th>
-                    <th class="text-left px-4 py-3">Status</th>
-                    <th class="text-left px-4 py-3">Ações</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-outline-variant">
-                @foreach (var admin in tenantAdmins)
-                {
-                    <tr class="hover:bg-surface-container-low transition-colors">
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-primary-container text-white flex items-center justify-center text-sm font-bold">
-                                    @admin.FirstName.Substring(0, 1).ToUpper()
-                                </div>
-                                <span class="font-semibold text-primary-container">@admin.FullName</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-on-surface-variant">@admin.Email</td>
-                        <td class="px-4 py-3">
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-surface-container text-secondary">@(admin.Tenant?.Name ?? "—")</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            @if (admin.Status == "active")
-                            {
-                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inativo
-                                </span>
-                            }
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                                <button onclick="openEditAdmin('@admin.Id','@admin.FirstName.Replace("'","\\'")', '@admin.LastName.Replace("'","\\'")', '@admin.Email')"
-                                        class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant" title="Editar">
-                                    <span class="ms text-[18px]">edit</span>
-                                </button>
-                                <form method="post" action="/system/users/@admin.Id/status" class="inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit"
-                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors @(admin.Status == "active" ? "text-error" : "text-green-600")"
-                                            title="@(admin.Status == "active" ? "Desativar acesso" : "Ativar acesso")"
-                                            onclick="return confirm('@(admin.Status == "active" ? "Desativar" : "Ativar") acesso de @admin.FullName?')">
-                                        <span class="ms text-[18px]">@(admin.Status == "active" ? "person_off" : "person_check")</span>
-                                    </button>
-                                </form>
-                                <form method="post" action="/system/users/@admin.Id/reset-password" class="inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit"
-                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
-                                            title="Redefinir senha"
-                                            onclick="return confirm('Redefinir senha de @admin.FullName? A nova senha será exibida após a ação.')">
-                                        <span class="ms text-[18px]">key</span>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-primary-container flex items-center gap-2">
+            <span class="ms">history</span> Atividade recente na plataforma
+        </h2>
+        <a href="/system/audit" class="text-sm text-secondary hover:underline">Ver tudo →</a>
     </div>
-</section>
-
-<!-- Modal: Editar empresa -->
-<div id="modal-edit-tenant" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-bold text-primary-container">Editar empresa</h3>
-            <button onclick="closeModal('modal-edit-tenant')" class="p-2 hover:bg-surface-container rounded-lg transition-colors">
-                <span class="ms">close</span>
-            </button>
-        </div>
-        <form id="form-edit-tenant" method="post" class="space-y-4">
-            @Html.AntiForgeryToken()
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Nome da empresa *</label>
-                <input id="edit-tenant-name" name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
-                <input id="edit-tenant-logo" name="logoUrl" type="url" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
-                    <input id="edit-tenant-primary" name="primaryColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
-                    <input id="edit-tenant-accent" name="accentColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Plano</label>
-                <select id="edit-tenant-plan" name="billingPlan" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors">
-                    <option value="trial">Trial</option>
-                    <option value="starter">Starter</option>
-                    <option value="growth">Growth</option>
-                    <option value="enterprise">Enterprise</option>
-                </select>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="button" onclick="closeModal('modal-edit-tenant')" class="btn-outline flex-1">Cancelar</button>
-                <button type="submit" class="btn-primary flex-1">Salvar alterações</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal: Editar Tenant Admin -->
-<div id="modal-edit-admin" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-bold text-primary-container">Editar Tenant Admin</h3>
-            <button onclick="closeModal('modal-edit-admin')" class="p-2 hover:bg-surface-container rounded-lg transition-colors">
-                <span class="ms">close</span>
-            </button>
-        </div>
-        <form id="form-edit-admin" method="post" class="space-y-4">
-            @Html.AntiForgeryToken()
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Nome *</label>
-                    <input id="edit-admin-first" name="firstName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1.5">Sobrenome *</label>
-                    <input id="edit-admin-last" name="lastName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1.5">Email *</label>
-                <input id="edit-admin-email" name="email" type="email" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="button" onclick="closeModal('modal-edit-admin')" class="btn-outline flex-1">Cancelar</button>
-                <button type="submit" class="btn-primary flex-1">Salvar alterações</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-<script>
-function openEditTenant(id, name, logo, primary, accent, plan) {
-    document.getElementById('edit-tenant-name').value = name;
-    document.getElementById('edit-tenant-logo').value = logo;
-    document.getElementById('edit-tenant-primary').value = primary;
-    document.getElementById('edit-tenant-accent').value = accent;
-    document.getElementById('edit-tenant-plan').value = plan;
-    document.getElementById('form-edit-tenant').action = '/system/tenants/' + id + '/edit';
-    document.getElementById('modal-edit-tenant').classList.remove('hidden');
-}
-
-function openEditAdmin(id, firstName, lastName, email) {
-    document.getElementById('edit-admin-first').value = firstName;
-    document.getElementById('edit-admin-last').value = lastName;
-    document.getElementById('edit-admin-email').value = email;
-    document.getElementById('form-edit-admin').action = '/system/users/' + id + '/edit';
-    document.getElementById('modal-edit-admin').classList.remove('hidden');
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal('modal-edit-tenant');
-        closeModal('modal-edit-admin');
+    @{
+        var auditList = recentAudit.ToList();
     }
-});
-</script>
-}
+    @if (auditList.Any())
+    {
+        <div class="space-y-2">
+            @foreach (var log in auditList)
+            {
+                <div class="flex items-start gap-3 py-2 border-b border-outline-variant last:border-0">
+                    <span class="ms text-[18px] text-on-surface-variant mt-0.5">bolt</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-primary-container truncate">@log.Action <span class="font-normal text-on-surface-variant">— @log.EntityType @(log.EntityId?.ToString()[..8] ?? "")</span></p>
+                        @if (!string.IsNullOrWhiteSpace(log.NewValue))
+                        {
+                            <p class="text-xs text-on-surface-variant truncate">@log.NewValue</p>
+                        }
+                    </div>
+                    <span class="text-xs text-on-surface-variant whitespace-nowrap">@log.CreatedAt.ToString("dd/MM HH:mm")</span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-on-surface-variant text-sm">Nenhuma atividade registrada ainda.</p>
+    }
+</section>
