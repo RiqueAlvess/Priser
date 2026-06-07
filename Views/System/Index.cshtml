@@ -7,93 +7,99 @@
 
 <header class="mb-8">
     <p class="text-secondary font-semibold uppercase tracking-wide text-sm">System Admin</p>
-    <h1 class="text-3xl font-bold text-primary-container mt-1">Empresas e acessos Tenant Admin</h1>
-    <p class="text-on-surface-variant mt-2">Acesso global para criar empresas, definir logo/branding e provisionar o primeiro administrador do tenant.</p>
+    <h1 class="text-3xl font-bold text-primary-container mt-1">Gestão de Empresas e Acessos</h1>
+    <p class="text-on-surface-variant mt-2">Crie empresas, defina branding, provisione Tenant Admins e gerencie status de acesso.</p>
 </header>
 
-
-<section class="card p-6 mb-8">
-    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">security</span> Matriz RBAC aplicada</h2>
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead style="background:#f3f4f5">
-                <tr>
-                    <th class="text-left px-4 py-3">Role</th>
-                    <th class="text-left px-4 py-3">Escopo de visão</th>
-                    <th class="text-left px-4 py-3">Permissões de escrita</th>
-                    <th class="text-left px-4 py-3">Observações</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-outline-variant">
-                <tr><td class="px-4 py-3 font-bold">System Admin</td><td class="px-4 py-3">Todos os tenants</td><td class="px-4 py-3">Gerencia tenants, planos e infraestrutura</td><td class="px-4 py-3">Superusuário da plataforma</td></tr>
-                <tr><td class="px-4 py-3 font-bold">Tenant Admin</td><td class="px-4 py-3">Todo o tenant_id</td><td class="px-4 py-3">Configurações, HRIS stub, orçamentos, relatórios e CSV</td><td class="px-4 py-3">RH / Gestor de Pessoas</td></tr>
-                <tr><td class="px-4 py-3 font-bold">Manager</td><td class="px-4 py-3">Hierarquia direta + indireta</td><td class="px-4 py-3">Distribui pontos, aprova/rejeita, relatórios do time</td><td class="px-4 py-3">Líderes de equipe</td></tr>
-                <tr><td class="px-4 py-3 font-bold">Employee</td><td class="px-4 py-3">Feed público + próprios dados</td><td class="px-4 py-3">Reconhecimentos, resgates e perfil básico</td><td class="px-4 py-3">Colaboradores</td></tr>
-                <tr><td class="px-4 py-3 font-bold">Viewer</td><td class="px-4 py-3">Definido por tenant</td><td class="px-4 py-3">Apenas visualização de relatórios</td><td class="px-4 py-3">Auditores internos</td></tr>
-            </tbody>
-        </table>
+<!-- Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Empresas ativas</p>
+        <p class="text-3xl font-bold text-primary-container">@tenants.Count(t => t.Status == "active")</p>
     </div>
-</section>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Empresas suspensas</p>
+        <p class="text-3xl font-bold text-error">@tenants.Count(t => t.Status != "active")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Tenant Admins</p>
+        <p class="text-3xl font-bold text-primary-container">@tenantAdmins.Count</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Admins ativos</p>
+        <p class="text-3xl font-bold text-secondary">@tenantAdmins.Count(u => u.Status == "active")</p>
+    </div>
+</div>
 
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+    <!-- Nova empresa -->
     <section class="card p-6 xl:col-span-1">
         <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">add_business</span> Nova empresa</h2>
         <form method="post" action="/system/tenants/create" class="space-y-4">
             @Html.AntiForgeryToken()
             <div>
                 <label class="block text-sm font-semibold mb-1.5">Nome da empresa *</label>
-                <input name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                <input name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
             </div>
             <div>
-                <label class="block text-sm font-semibold mb-1.5">Slug</label>
-                <input name="slug" placeholder="empresa-cliente" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                <label class="block text-sm font-semibold mb-1.5">Slug <span class="text-on-surface-variant font-normal">(gerado automaticamente)</span></label>
+                <input name="slug" placeholder="empresa-cliente" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
-                <input name="logoUrl" type="url" placeholder="https://.../logo.png" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                <input name="logoUrl" type="url" placeholder="https://.../logo.png" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
-                    <input name="primaryColor" value="#0b1b3d" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                    <input name="primaryColor" value="#0b1b3d" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
                 </div>
                 <div>
                     <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
-                    <input name="accentColor" value="#00A3E0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                    <input name="accentColor" value="#00A3E0" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
                 </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Plano</label>
+                <select name="billingPlan" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors">
+                    <option value="trial">Trial</option>
+                    <option value="starter">Starter</option>
+                    <option value="growth">Growth</option>
+                    <option value="enterprise">Enterprise</option>
+                </select>
             </div>
 
             <div class="pt-4 border-t border-outline-variant">
                 <h3 class="font-bold text-primary-container mb-3">Primeiro Tenant Admin</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <input name="adminFirstName" placeholder="Nome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm" />
-                    <input name="adminLastName" placeholder="Sobrenome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                    <input name="adminFirstName" placeholder="Nome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+                    <input name="adminLastName" placeholder="Sobrenome" required class="border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
                 </div>
-                <input name="adminEmail" type="email" placeholder="admin@empresa.com" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm mb-3" />
-                <input name="adminPassword" placeholder="Senha opcional" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm" />
+                <input name="adminEmail" type="email" placeholder="admin@empresa.com" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:border-secondary transition-colors" />
+                <input name="adminPassword" placeholder="Senha (opcional)" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
                 <p class="text-xs text-on-surface-variant mt-2">Se vazio, uma senha temporária será gerada e exibida após criar.</p>
             </div>
             <button class="btn-primary w-full">Criar empresa</button>
         </form>
     </section>
 
+    <!-- Lista de empresas -->
     <section class="card p-6 xl:col-span-2">
-        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">corporate_fare</span> Empresas</h2>
+        <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">corporate_fare</span> Empresas (@tenants.Count)</h2>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead style="background:#f3f4f5">
                     <tr>
                         <th class="text-left px-4 py-3">Empresa</th>
-                        <th class="text-left px-4 py-3">Slug</th>
                         <th class="text-left px-4 py-3">Plano</th>
                         <th class="text-left px-4 py-3">Status</th>
-                        <th class="text-left px-4 py-3">Ação</th>
+                        <th class="text-left px-4 py-3">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-outline-variant">
                     @foreach (var tenant in tenants)
                     {
-                        <tr>
+                        <tr class="hover:bg-surface-container-low transition-colors">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     @if (!string.IsNullOrWhiteSpace(tenant.LogoUrl))
@@ -102,19 +108,47 @@
                                     }
                                     else
                                     {
-                                        <div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold">@tenant.Name.Substring(0, 1)</div>
+                                        <div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-sm">@tenant.Name.Substring(0, 1).ToUpper()</div>
                                     }
-                                    <span class="font-semibold text-primary-container">@tenant.Name</span>
+                                    <div>
+                                        <p class="font-semibold text-primary-container">@tenant.Name</p>
+                                        <p class="text-xs text-on-surface-variant">@tenant.Slug</p>
+                                    </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-on-surface-variant">@tenant.Slug</td>
-                            <td class="px-4 py-3">@tenant.BillingPlan</td>
-                            <td class="px-4 py-3">@tenant.Status</td>
                             <td class="px-4 py-3">
-                                <form method="post" action="/system/tenants/@tenant.Id/status">
-                                    @Html.AntiForgeryToken()
-                                    <button class="btn-outline py-1 px-3">@(tenant.Status == "active" ? "Suspender" : "Ativar")</button>
-                                </form>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-surface-container text-on-surface-variant capitalize">@tenant.BillingPlan</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                @if (tenant.Status == "active")
+                                {
+                                    <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Suspenso
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openEditTenant('@tenant.Id','@tenant.Name.Replace("'","\\'")', '@(tenant.LogoUrl ?? "")', '@(tenant.PrimaryColor ?? "#0b1b3d")', '@(tenant.AccentColor ?? "#00A3E0")', '@tenant.BillingPlan')"
+                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant" title="Editar">
+                                        <span class="ms text-[18px]">edit</span>
+                                    </button>
+                                    <form method="post" action="/system/tenants/@tenant.Id/status" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit"
+                                                class="p-2 rounded-lg hover:bg-surface-container transition-colors @(tenant.Status == "active" ? "text-error" : "text-green-600")"
+                                                title="@(tenant.Status == "active" ? "Suspender" : "Ativar")"
+                                                onclick="return confirm('@(tenant.Status == "active" ? "Suspender" : "Ativar") empresa @tenant.Name?')">
+                                            <span class="ms text-[18px]">@(tenant.Status == "active" ? "block" : "check_circle")</span>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -124,16 +158,191 @@
     </section>
 </div>
 
+<!-- Tenant Admins -->
 <section class="card p-6">
-    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">admin_panel_settings</span> Tenant Admins</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        @foreach (var admin in tenantAdmins)
-        {
-            <div class="border border-outline-variant rounded-xl p-4">
-                <p class="font-bold text-primary-container">@admin.FullName</p>
-                <p class="text-sm text-on-surface-variant">@admin.Email</p>
-                <p class="text-xs text-secondary mt-2">@(admin.Tenant?.Name ?? "—")</p>
-            </div>
-        }
+    <h2 class="text-xl font-bold text-primary-container mb-4 flex items-center gap-2"><span class="ms">admin_panel_settings</span> Tenant Admins (@tenantAdmins.Count)</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr>
+                    <th class="text-left px-4 py-3">Usuário</th>
+                    <th class="text-left px-4 py-3">Email</th>
+                    <th class="text-left px-4 py-3">Empresa</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                @foreach (var admin in tenantAdmins)
+                {
+                    <tr class="hover:bg-surface-container-low transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full bg-primary-container text-white flex items-center justify-center text-sm font-bold">
+                                    @admin.FirstName.Substring(0, 1).ToUpper()
+                                </div>
+                                <span class="font-semibold text-primary-container">@admin.FullName</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-on-surface-variant">@admin.Email</td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-surface-container text-secondary">@(admin.Tenant?.Name ?? "—")</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if (admin.Status == "active")
+                            {
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inativo
+                                </span>
+                            }
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <button onclick="openEditAdmin('@admin.Id','@admin.FirstName.Replace("'","\\'")', '@admin.LastName.Replace("'","\\'")', '@admin.Email')"
+                                        class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant" title="Editar">
+                                    <span class="ms text-[18px]">edit</span>
+                                </button>
+                                <form method="post" action="/system/users/@admin.Id/status" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors @(admin.Status == "active" ? "text-error" : "text-green-600")"
+                                            title="@(admin.Status == "active" ? "Desativar acesso" : "Ativar acesso")"
+                                            onclick="return confirm('@(admin.Status == "active" ? "Desativar" : "Ativar") acesso de @admin.FullName?')">
+                                        <span class="ms text-[18px]">@(admin.Status == "active" ? "person_off" : "person_check")</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="/system/users/@admin.Id/reset-password" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="p-2 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
+                                            title="Redefinir senha"
+                                            onclick="return confirm('Redefinir senha de @admin.FullName? A nova senha será exibida após a ação.')">
+                                        <span class="ms text-[18px]">key</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </section>
+
+<!-- Modal: Editar empresa -->
+<div id="modal-edit-tenant" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Editar empresa</h3>
+            <button onclick="closeModal('modal-edit-tenant')" class="p-2 hover:bg-surface-container rounded-lg transition-colors">
+                <span class="ms">close</span>
+            </button>
+        </div>
+        <form id="form-edit-tenant" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Nome da empresa *</label>
+                <input id="edit-tenant-name" name="name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
+                <input id="edit-tenant-logo" name="logoUrl" type="url" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
+                    <input id="edit-tenant-primary" name="primaryColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
+                    <input id="edit-tenant-accent" name="accentColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Plano</label>
+                <select id="edit-tenant-plan" name="billingPlan" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors">
+                    <option value="trial">Trial</option>
+                    <option value="starter">Starter</option>
+                    <option value="growth">Growth</option>
+                    <option value="enterprise">Enterprise</option>
+                </select>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeModal('modal-edit-tenant')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Editar Tenant Admin -->
+<div id="modal-edit-admin" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Editar Tenant Admin</h3>
+            <button onclick="closeModal('modal-edit-admin')" class="p-2 hover:bg-surface-container rounded-lg transition-colors">
+                <span class="ms">close</span>
+            </button>
+        </div>
+        <form id="form-edit-admin" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Nome *</label>
+                    <input id="edit-admin-first" name="firstName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Sobrenome *</label>
+                    <input id="edit-admin-last" name="lastName" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Email *</label>
+                <input id="edit-admin-email" name="email" type="email" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary transition-colors" />
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeModal('modal-edit-admin')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openEditTenant(id, name, logo, primary, accent, plan) {
+    document.getElementById('edit-tenant-name').value = name;
+    document.getElementById('edit-tenant-logo').value = logo;
+    document.getElementById('edit-tenant-primary').value = primary;
+    document.getElementById('edit-tenant-accent').value = accent;
+    document.getElementById('edit-tenant-plan').value = plan;
+    document.getElementById('form-edit-tenant').action = '/system/tenants/' + id + '/edit';
+    document.getElementById('modal-edit-tenant').classList.remove('hidden');
+}
+
+function openEditAdmin(id, firstName, lastName, email) {
+    document.getElementById('edit-admin-first').value = firstName;
+    document.getElementById('edit-admin-last').value = lastName;
+    document.getElementById('edit-admin-email').value = email;
+    document.getElementById('form-edit-admin').action = '/system/users/' + id + '/edit';
+    document.getElementById('modal-edit-admin').classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal('modal-edit-tenant');
+        closeModal('modal-edit-admin');
+    }
+});
+</script>
+}
