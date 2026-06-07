@@ -3,7 +3,7 @@
     ViewBag.Title = "Auditoria — Priser System";
     var logs = ViewBag.Logs as List<AuditLog> ?? new List<AuditLog>();
     var total = ViewBag.Total as int? ?? 0;
-    var page = ViewBag.Page as int? ?? 1;
+    var currentPage = ViewBag.Page as int? ?? 1;
     var totalPages = ViewBag.TotalPages as int? ?? 1;
     var pageSize = ViewBag.PageSize as int? ?? 50;
     var tenants = ViewBag.Tenants as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
@@ -70,7 +70,7 @@
 <div class="flex items-center justify-between mb-4">
     <p class="text-sm text-on-surface-variant">
         <span class="font-semibold text-primary-container">@total.ToString("N0")</span> registros encontrados
-        · Mostrando página @page de @totalPages
+        · Mostrando página @currentPage de @totalPages
     </p>
 </div>
 
@@ -138,23 +138,23 @@
 @if (totalPages > 1)
 {
     <div class="flex items-center justify-center gap-2">
-        @if (page > 1)
+        @if (currentPage > 1)
         {
-            <a href="/system/audit?page=@(page - 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+            <a href="/system/audit?page=@(currentPage - 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
                class="px-4 py-2 border border-outline-variant rounded-xl text-sm hover:bg-surface-container transition-colors">
                 ← Anterior
             </a>
         }
-        @for (int p = Math.Max(1, page - 2); p <= Math.Min(totalPages, page + 2); p++)
+        @for (int p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
         {
             <a href="/system/audit?page=@p&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
-               class="px-4 py-2 border rounded-xl text-sm transition-colors @(p == page ? "border-secondary bg-secondary text-white" : "border-outline-variant hover:bg-surface-container")">
+               class="px-4 py-2 border rounded-xl text-sm transition-colors @(p == currentPage ? "border-secondary bg-secondary text-white" : "border-outline-variant hover:bg-surface-container")">
                 @p
             </a>
         }
-        @if (page < totalPages)
+        @if (currentPage < totalPages)
         {
-            <a href="/system/audit?page=@(page + 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
+            <a href="/system/audit?page=@(currentPage + 1)&tenantId=@filterTenantId&action=@filterAction&from=@filterFrom&to=@filterTo"
                class="px-4 py-2 border border-outline-variant rounded-xl text-sm hover:bg-surface-container transition-colors">
                 Próxima →
             </a>

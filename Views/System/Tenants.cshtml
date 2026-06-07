@@ -17,10 +17,6 @@
         "starter"    => "bg-gray-100 text-gray-600",
         _            => "bg-yellow-100 text-yellow-700",
     };
-    decimal PlanPrice(string plan) => plan.ToLower() switch
-    {
-        "starter" => 99m, "growth" => 299m, "business" => 799m, "enterprise" => 1999m, _ => 0m
-    };
 }
 
 <header class="mb-6">
