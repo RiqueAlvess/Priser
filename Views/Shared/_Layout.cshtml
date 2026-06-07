@@ -113,56 +113,66 @@
         <nav class="flex-1 px-3 space-y-1">
             @if (User.IsInRole("SystemAdmin"))
             {
+                <!-- System Admin opera somente no painel de plataforma, sem acesso às telas de tenant -->
                 <a href="/system" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "System" ? "active" : "")">
                     <span class="ms">corporate_fare</span> Sistema
                 </a>
             }
-            <a href="/" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
-                <span class="ms">home</span> Home
-            </a>
-            <a href="/feed" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Feed" ? "active" : "")">
-                <span class="ms">rss_feed</span> Feed
-            </a>
-            <a href="/recognize" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Recognize" ? "active" : "")">
-                <span class="ms">workspace_premium</span> Reconhecer
-            </a>
-            <a href="/wallet" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Wallet" ? "active" : "")">
-                <span class="ms">account_balance_wallet</span> Minha Carteira
-            </a>
-            <a href="/marketplace" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Marketplace" ? "active" : "")">
-                <span class="ms">redeem</span> Marketplace
-            </a>
-            <a href="/surveys" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Surveys" ? "active" : "")">
-                <span class="ms">poll</span> Pesquisas
-            </a>
-            @if (User.IsInRole("Manager") || User.IsInRole("TenantAdmin") || User.IsInRole("SystemAdmin"))
+            else
             {
-                <a href="/approvals" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Approvals" ? "active" : "")">
-                    <span class="ms">fact_check</span> Aprovações
-                    @{var pending = ViewBag.PendingApprovals as int? ?? 0;}
-                    @if (pending > 0) {
-                        <span class="ml-auto bg-error text-white text-xs px-2 py-0.5 rounded-full">@pending</span>
-                    }
+                <a href="/" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                    <span class="ms">home</span> Home
                 </a>
-            }
-            @if (User.IsInRole("TenantAdmin") || User.IsInRole("SystemAdmin"))
-            {
-                <div class="pt-3 mt-3 border-t border-white/10">
-                    <p class="px-4 text-xs text-white/40 uppercase tracking-wider mb-2">Admin</p>
-                    <a href="/admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                        <span class="ms">admin_panel_settings</span> Painel Admin
+                <a href="/feed" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Feed" ? "active" : "")">
+                    <span class="ms">rss_feed</span> Feed
+                </a>
+                @if (!User.IsInRole("Viewer"))
+                {
+                    <a href="/recognize" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Recognize" ? "active" : "")">
+                        <span class="ms">workspace_premium</span> Reconhecer
                     </a>
-                    <a href="/admin/enterprise" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Enterprise" ? "active" : "")">
-                        <span class="ms">enterprise</span> Enterprise Suite
+                    <a href="/wallet" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Wallet" ? "active" : "")">
+                        <span class="ms">account_balance_wallet</span> Minha Carteira
                     </a>
-                </div>
+                }
+                <a href="/marketplace" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Marketplace" ? "active" : "")">
+                    <span class="ms">redeem</span> Marketplace
+                </a>
+                <a href="/surveys" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Surveys" ? "active" : "")">
+                    <span class="ms">poll</span> Pesquisas
+                </a>
+                @if (User.IsInRole("Manager") || User.IsInRole("TenantAdmin"))
+                {
+                    <a href="/approvals" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Approvals" ? "active" : "")">
+                        <span class="ms">fact_check</span> Aprovações
+                        @{var pending = ViewBag.PendingApprovals as int? ?? 0;}
+                        @if (pending > 0) {
+                            <span class="ml-auto bg-error text-white text-xs px-2 py-0.5 rounded-full">@pending</span>
+                        }
+                    </a>
+                }
+                @if (User.IsInRole("TenantAdmin"))
+                {
+                    <div class="pt-3 mt-3 border-t border-white/10">
+                        <p class="px-4 text-xs text-white/40 uppercase tracking-wider mb-2">Admin</p>
+                        <a href="/admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                            <span class="ms">admin_panel_settings</span> Painel Admin
+                        </a>
+                        <a href="/admin/enterprise" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Enterprise" ? "active" : "")">
+                            <span class="ms">enterprise</span> Enterprise Suite
+                        </a>
+                    </div>
+                }
             }
         </nav>
 
         <div class="px-3 mt-auto space-y-1">
-            <a href="/recognize" class="btn-primary w-full flex items-center justify-center gap-2 mb-3">
-                <span class="ms text-[16px]">workspace_premium</span> Reconhecer
-            </a>
+            @if (!User.IsInRole("SystemAdmin") && !User.IsInRole("Viewer"))
+            {
+                <a href="/recognize" class="btn-primary w-full flex items-center justify-center gap-2 mb-3">
+                    <span class="ms text-[16px]">workspace_premium</span> Reconhecer
+                </a>
+            }
             <div class="border-t border-white/10 pt-3">
                 <form method="post" action="/auth/logout">
                     @Html.AntiForgeryToken()

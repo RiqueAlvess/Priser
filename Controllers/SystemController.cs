@@ -113,6 +113,105 @@ public class SystemController(AppDbContext db, WalletService wallets) : Controll
         tenant.Status = tenant.Status == "active" ? "suspended" : "active";
         tenant.DeletedAt = null;
         await db.SaveChangesAsync();
+        TempData["Success"] = $"Empresa {(tenant.Status == "active" ? "ativada" : "suspensa")} com sucesso.";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost("tenants/{id:guid}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditTenant(
+        Guid id,
+        string name,
+        string? logoUrl,
+        string? primaryColor,
+        string? accentColor,
+        string? billingPlan)
+    {
+        var tenant = await db.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == id);
+        if (tenant == null) return NotFound();
+
+        tenant.Name = name.Trim();
+        tenant.LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();
+        tenant.PrimaryColor = string.IsNullOrWhiteSpace(primaryColor) ? tenant.PrimaryColor : primaryColor.Trim();
+        tenant.AccentColor = string.IsNullOrWhiteSpace(accentColor) ? tenant.AccentColor : accentColor.Trim();
+        if (!string.IsNullOrWhiteSpace(billingPlan))
+            tenant.BillingPlan = billingPlan.Trim();
+
+        await db.SaveChangesAsync();
+        TempData["Success"] = $"Empresa \"{tenant.Name}\" atualizada com sucesso.";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost("users/{id:guid}/status")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleUserStatus(Guid id)
+    {
+        var user = await db.Users.IgnoreQueryFilters()
+            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null) return NotFound();
+
+        if (user.UserRoles.Any(ur => ur.Role.NormalizedName == "SYSTEMADMIN"))
+        {
+            TempData["Error"] = "Não é possível alterar o status de um System Admin.";
+            return RedirectToAction("Index");
+        }
+
+        user.Status = user.Status == "active" ? "inactive" : "active";
+        await db.SaveChangesAsync();
+        TempData["Success"] = $"Acesso de {user.FullName} {(user.Status == "active" ? "ativado" : "desativado")}.";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost("users/{id:guid}/reset-password")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(Guid id)
+    {
+        var user = await db.Users.IgnoreQueryFilters()
+            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null) return NotFound();
+
+        if (user.UserRoles.Any(ur => ur.Role.NormalizedName == "SYSTEMADMIN"))
+        {
+            TempData["Error"] = "Não é possível redefinir a senha de um System Admin por aqui.";
+            return RedirectToAction("Index");
+        }
+
+        var newPassword = $"Priser@{Guid.NewGuid().ToString()[..8]}";
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await db.SaveChangesAsync();
+        TempData["Success"] = $"Nova senha de {user.FullName}: {newPassword}";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost("users/{id:guid}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditUser(Guid id, string firstName, string lastName, string email)
+    {
+        var user = await db.Users.IgnoreQueryFilters()
+            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null) return NotFound();
+
+        if (user.UserRoles.Any(ur => ur.Role.NormalizedName == "SYSTEMADMIN"))
+        {
+            TempData["Error"] = "Não é possível editar um System Admin por aqui.";
+            return RedirectToAction("Index");
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        if (normalizedEmail != user.Email && await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == normalizedEmail && u.Id != id))
+        {
+            TempData["Error"] = "Já existe um usuário com este email.";
+            return RedirectToAction("Index");
+        }
+
+        user.FirstName = firstName.Trim();
+        user.LastName = lastName.Trim();
+        user.Email = normalizedEmail;
+        await db.SaveChangesAsync();
+        TempData["Success"] = $"Usuário {user.FullName} atualizado com sucesso.";
         return RedirectToAction("Index");
     }
 

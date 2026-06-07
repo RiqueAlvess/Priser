@@ -1,16 +1,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Priser.Data;
 using Priser.Models.Entities;
 using Priser.Models.ViewModels;
-using Priser.Services;
 
 namespace Priser.Controllers;
 
-public class AuthController(AppDbContext db, WalletService wallets) : Controller
+public class AuthController(AppDbContext db) : Controller
 {
     [HttpGet("/auth/login")]
     public IActionResult Login(string? returnUrl = null)
@@ -50,85 +48,7 @@ public class AuthController(AppDbContext db, WalletService wallets) : Controller
     }
 
     [HttpGet("/auth/register")]
-    public IActionResult Register() => View();
-
-    [HttpPost("/auth/register")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
-    {
-        if (!ModelState.IsValid) return View(model);
-
-        var slug = model.CompanyName.ToLower().Replace(" ", "-").Replace("_", "-");
-        if (await db.Tenants.AnyAsync(t => t.Slug == slug))
-            slug = $"{slug}-{Guid.NewGuid().ToString()[..6]}";
-
-        if (await db.Users.AnyAsync(u => u.Email == model.Email.ToLower()))
-        {
-            ModelState.AddModelError("Email", "Este email já está cadastrado.");
-            return View(model);
-        }
-
-        using var tx = await db.Database.BeginTransactionAsync();
-        try
-        {
-            var tenant = new Tenant
-            {
-                Name = model.CompanyName,
-                Slug = slug,
-                Status = "active",
-                BillingPlan = "trial"
-            };
-            db.Tenants.Add(tenant);
-            await db.SaveChangesAsync();
-
-            var employeeRole = await db.Roles.FirstAsync(r => r.NormalizedName == "TENANTADMIN");
-            var user = new User
-            {
-                TenantId = tenant.Id,
-                Email = model.Email.ToLower(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Status = "active"
-            };
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
-
-            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = employeeRole.Id, TenantId = tenant.Id });
-
-            // Seed default company values
-            db.CompanyValues.AddRange(
-                new CompanyValue { TenantId = tenant.Id, Name = "Inovação", Icon = "lightbulb", Color = "#00658d", DisplayOrder = 1 },
-                new CompanyValue { TenantId = tenant.Id, Name = "Colaboração", Icon = "group", Color = "#567bff", DisplayOrder = 2 },
-                new CompanyValue { TenantId = tenant.Id, Name = "Excelência", Icon = "star", Color = "#0039b5", DisplayOrder = 3 },
-                new CompanyValue { TenantId = tenant.Id, Name = "Respeito", Icon = "handshake", Color = "#004b69", DisplayOrder = 4 }
-            );
-
-            // Seed default approval policy
-            db.ApprovalPolicies.Add(new ApprovalPolicy
-            {
-                TenantId = tenant.Id,
-                Name = "Política Padrão",
-                ThresholdPoints = 100,
-                RequiresApproval = true,
-                IsActive = true
-            });
-
-            await db.SaveChangesAsync();
-            await wallets.GetOrCreateWalletAsync(user.Id, tenant.Id, "earned");
-            await wallets.GetOrCreateWalletAsync(user.Id, tenant.Id, "allowance");
-
-            await tx.CommitAsync();
-            await SignInUserAsync(user);
-            return RedirectToAction("Index", "Home");
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            ModelState.AddModelError("", "Erro ao criar conta. Tente novamente.");
-            return View(model);
-        }
-    }
+    public IActionResult Register() => RedirectToAction("Login");
 
     [HttpPost("/auth/logout")]
     [ValidateAntiForgeryToken]
