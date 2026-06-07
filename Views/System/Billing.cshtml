@@ -1,0 +1,179 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Cobrança — Priser System";
+    var mrr = ViewBag.MRR as decimal? ?? 0m;
+    var arr = ViewBag.ARR as decimal? ?? 0m;
+    var tenants = ViewBag.Tenants as List<Tenant> ?? new List<Tenant>();
+    var transactions = ViewBag.Transactions as List<Transaction> ?? new List<Transaction>();
+    var tenantsByPlan = ViewBag.TenantsByPlan as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+
+    string StatusBadge(string s) => s switch
+    {
+        "completed" => "bg-green-100 text-green-700",
+        "pending"   => "bg-yellow-100 text-yellow-700",
+        "failed"    => "bg-red-100 text-red-700",
+        _           => "bg-gray-100 text-gray-600"
+    };
+    string StatusLabel(string s) => s switch { "completed" => "pago", "pending" => "pendente", "failed" => "falhou", _ => s };
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Cobrança</h1>
+    <p class="text-on-surface-variant mt-1">Receita, créditos emitidos e histórico financeiro</p>
+</header>
+
+<!-- KPIs financeiros -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">MRR atual</p>
+        <p class="text-3xl font-bold text-primary-container">$@mrr.ToString("N0")</p>
+        <p class="text-xs text-secondary mt-1">receita mensal recorrente</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">ARR projetado</p>
+        <p class="text-3xl font-bold text-primary-container">$@arr.ToString("N0")</p>
+        <p class="text-xs text-secondary mt-1">receita anual</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Créditos manuais</p>
+        <p class="text-3xl font-bold text-primary-container">@transactions.Count(t => t.TransactionType == "manual_credit")</p>
+        <p class="text-xs text-on-surface-variant mt-1">emissões registradas</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Transações</p>
+        <p class="text-3xl font-bold text-primary-container">@transactions.Count</p>
+        <p class="text-xs text-on-surface-variant mt-1">últimas registradas</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+    <!-- Receita por plano -->
+    <section class="card p-6">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">pie_chart</span> Receita por plano
+        </h2>
+        <div class="space-y-3">
+            @foreach (var item in tenantsByPlan)
+            {
+                decimal planRev = (decimal)item.Revenue;
+                int pct = mrr > 0 ? (int)(planRev * 100 / mrr) : 0;
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="font-semibold text-primary-container capitalize">@((string)item.Plan)</span>
+                        <span class="text-on-surface-variant">@((int)item.Count) tenant(s) — $@planRev.ToString("N0")</span>
+                    </div>
+                    <div class="bg-surface-container rounded-full h-2">
+                        <div class="h-2 rounded-full bg-secondary transition-all" style="width:@(pct)%"></div>
+                    </div>
+                </div>
+            }
+            @if (!tenantsByPlan.Any())
+            {
+                <p class="text-on-surface-variant text-sm">Nenhum tenant ativo.</p>
+            }
+        </div>
+    </section>
+
+    <!-- Emissão manual de créditos -->
+    <section class="card p-6 xl:col-span-2">
+        <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+            <span class="ms">toll</span> Emitir créditos manualmente
+        </h2>
+        <form method="post" action="/system/billing/emit-credits" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Tenant *</label>
+                    <select id="emit-tenant" name="tenantId" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" onchange="loadUsers(this.value)">
+                        <option value="">Selecione o tenant</option>
+                        @foreach (var t in tenants)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Usuário destinatário *</label>
+                    <select id="emit-user" name="userId" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                        <option value="">Selecione o tenant primeiro</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Pacote de créditos *</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                    @foreach (var (lbl, val) in new[] { ("10k PP", 10000), ("25k PP", 25000), ("50k PP", 50000), ("100k PP", 100000) })
+                    {
+                        <button type="button" onclick="document.getElementById('emit-amount').value='@val'"
+                                class="border border-outline-variant rounded-xl px-3 py-2 text-sm hover:border-secondary hover:bg-blue-50 transition-colors">@lbl</button>
+                    }
+                </div>
+                <input id="emit-amount" name="amount" type="number" min="1" step="1" required placeholder="Ou insira um valor customizado" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Motivo obrigatório *</label>
+                <textarea name="reason" required rows="2" placeholder="Ex: Compensação por indisponibilidade do sistema em 01/06/2025..." class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary resize-none"></textarea>
+                <p class="text-xs text-on-surface-variant mt-1">Este motivo ficará registrado no log de auditoria.</p>
+            </div>
+            <button type="submit" class="btn-primary flex items-center gap-2">
+                <span class="ms text-[16px]">send</span> Emitir créditos
+            </button>
+        </form>
+    </section>
+</div>
+
+<!-- Histórico de transações -->
+<section class="card p-6">
+    <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
+        <span class="ms">receipt_long</span> Últimas transações
+    </h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead style="background:#f3f4f5">
+                <tr class="text-xs text-on-surface-variant uppercase tracking-wide">
+                    <th class="text-left px-4 py-3">Tenant</th>
+                    <th class="text-left px-4 py-3">Tipo</th>
+                    <th class="text-left px-4 py-3">Valor</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Data</th>
+                    <th class="text-left px-4 py-3">Descrição</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+                @foreach (var tx in transactions)
+                {
+                    var tName = tenants.FirstOrDefault(t => t.Id == tx.TenantId)?.Name ?? tx.TenantId.ToString()[..8];
+                    <tr class="hover:bg-surface-container-low">
+                        <td class="px-4 py-3 font-semibold text-primary-container">@tName</td>
+                        <td class="px-4 py-3 text-on-surface-variant capitalize">@tx.TransactionType.Replace("_", " ")</td>
+                        <td class="px-4 py-3 font-semibold">@tx.Amount.ToString("N0") PP</td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full @StatusBadge(tx.Status)">@StatusLabel(tx.Status)</span>
+                        </td>
+                        <td class="px-4 py-3 text-on-surface-variant">@tx.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td class="px-4 py-3 text-on-surface-variant text-xs max-w-xs truncate">@tx.Description</td>
+                    </tr>
+                }
+                @if (!transactions.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-on-surface-variant">Nenhuma transação registrada.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+const usersByTenant = {};
+
+async function loadUsers(tenantId) {
+    const sel = document.getElementById('emit-user');
+    sel.innerHTML = '<option>Carregando...</option>';
+    // Simple fallback — full AJAX would need an API endpoint
+    sel.innerHTML = '<option value="">Selecione o usuário</option>';
+}
+</script>
+}

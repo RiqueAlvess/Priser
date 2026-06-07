@@ -1,0 +1,145 @@
+@{
+    ViewBag.Title = "Integrações — Priser System";
+
+    var connectors = new[]
+    {
+        new { Id = "slack", Label = "Slack", Icon = "chat", Category = "Comunicação", Status = "active", Tenants = 12, LastSync = "há 2 min", Desc = "Bot de reconhecimentos, notificações e /prizer commands.", Docs = "api.slack.com" },
+        new { Id = "teams", Label = "Microsoft Teams", Icon = "groups", Category = "Comunicação", Status = "active", Tenants = 7, LastSync = "há 5 min", Desc = "Card adaptativo de reconhecimentos, notificações nativas.", Docs = "dev.teams.microsoft.com" },
+        new { Id = "hris-bamboo", Label = "BambooHR", Icon = "badge", Category = "HRIS", Status = "active", Tenants = 4, LastSync = "há 1h", Desc = "Sincronização de usuários, departamentos e cargos.", Docs = "bamboohr.com/api" },
+        new { Id = "hris-workday", Label = "Workday", Icon = "work", Category = "HRIS", Status = "inactive", Tenants = 0, LastSync = "—", Desc = "Integração HCM para grandes empresas.", Docs = "community.workday.com" },
+        new { Id = "sso-google", Label = "Google SSO", Icon = "account_circle", Category = "SSO", Status = "active", Tenants = 18, LastSync = "Contínuo", Desc = "OAuth 2.0 / OIDC com Google Workspace.", Docs = "developers.google.com" },
+        new { Id = "sso-saml", Label = "SAML 2.0", Icon = "key", Category = "SSO", Status = "active", Tenants = 3, LastSync = "Contínuo", Desc = "SAML enterprise para Okta, Azure AD, Ping Identity.", Docs = "saml.xml.org" },
+        new { Id = "stripe", Label = "Stripe", Icon = "payments", Category = "Pagamentos", Status = "active", Tenants = 47, LastSync = "Tempo real", Desc = "Processamento de assinaturas e créditos da plataforma.", Docs = "stripe.com/docs" },
+        new { Id = "sendgrid", Label = "SendGrid", Icon = "email", Category = "E-mail", Status = "active", Tenants = 47, LastSync = "Tempo real", Desc = "Envio transacional de e-mails da plataforma.", Docs = "sendgrid.com/docs" },
+        new { Id = "api", Label = "API Pública", Icon = "api", Category = "API", Status = "active", Tenants = 5, LastSync = "Tempo real", Desc = "REST API pública para integrações customizadas de Business+.", Docs = "docs.priser.com/api" },
+    };
+
+    var categories = connectors.Select(c => c.Category).Distinct().OrderBy(c => c).ToArray();
+}
+
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-container">Integrações</h1>
+    <p class="text-on-surface-variant mt-1">Conectores globais ativos e status de cada um</p>
+</header>
+
+<!-- Sumário -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Conectores ativos</p>
+        <p class="text-3xl font-bold text-primary-container">@connectors.Count(c => c.Status == "active")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Conectores inativos</p>
+        <p class="text-3xl font-bold text-error">@connectors.Count(c => c.Status != "active")</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Categorias</p>
+        <p class="text-3xl font-bold text-primary-container">@categories.Length</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Total conectores</p>
+        <p class="text-3xl font-bold text-primary-container">@connectors.Length</p>
+    </div>
+</div>
+
+<!-- Conectores por categoria -->
+@foreach (var cat in categories)
+{
+    var catConnectors = connectors.Where(c => c.Category == cat).ToArray();
+    <section class="card p-6 mb-5">
+        <h2 class="text-base font-bold text-on-surface-variant uppercase tracking-wide mb-4 flex items-center gap-2">
+            <span class="ms text-[16px]">
+                @(cat switch { "Comunicação" => "chat", "HRIS" => "badge", "SSO" => "key", "Pagamentos" => "payments", "E-mail" => "email", _ => "api" })
+            </span>
+            @cat
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @foreach (var conn in catConnectors)
+            {
+                <div class="flex items-start gap-4 p-4 border border-outline-variant rounded-xl hover:border-secondary transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                        <span class="ms text-[20px] text-secondary">@conn.Icon</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <h3 class="font-bold text-primary-container text-sm">@conn.Label</h3>
+                            @if (conn.Status == "active")
+                            {
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> ativo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> inativo
+                                </span>
+                            }
+                        </div>
+                        <p class="text-xs text-on-surface-variant mb-2 leading-relaxed">@conn.Desc</p>
+                        <div class="flex items-center gap-3 text-xs text-on-surface-variant">
+                            <span><span class="font-semibold text-primary-container">@conn.Tenants</span> tenant(s)</span>
+                            <span>·</span>
+                            <span>Sync: @conn.LastSync</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <button onclick="openConnModal('@conn.Id', '@conn.Label', '@conn.Status')"
+                                class="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant" title="Configurar">
+                            <span class="ms text-[16px]">settings</span>
+                        </button>
+                        <label class="relative inline-flex items-center cursor-pointer" title="@(conn.Status == "active" ? "Desativar" : "Ativar")">
+                            <input type="checkbox" @(conn.Status == "active" ? "checked" : "") class="sr-only peer"
+                                   onchange="toggleConnector('@conn.Id', this.checked)" />
+                            <div class="w-9 h-4 bg-gray-200 rounded-full peer peer-checked:bg-secondary after:absolute after:top-0 after:left-0 after:bg-white after:rounded-full after:h-4 after:w-4 after:border after:border-gray-300 after:transition-all peer-checked:after:translate-x-5"></div>
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- Modal: Configurar conector -->
+<div id="modal-conn" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 id="modal-conn-title" class="text-lg font-bold text-primary-container">Configurar conector</h3>
+            <button onclick="document.getElementById('modal-conn').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Client ID / App ID</label>
+                <input type="text" placeholder="••••••••••••••••" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary font-mono" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Client Secret</label>
+                <input type="password" placeholder="••••••••••••••••" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary font-mono" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Webhook URL (se aplicável)</label>
+                <input type="url" placeholder="https://..." class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+                <span class="ms text-[18px]">warning</span>
+                As credenciais são armazenadas criptografadas. Nunca exponha secrets em logs.
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-conn').classList.add('hidden')" class="btn-outline flex-1">Fechar</button>
+                <button type="button" onclick="alert('Credenciais salvas! (simulação)'); document.getElementById('modal-conn').classList.add('hidden')" class="btn-primary flex-1">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openConnModal(id, label, status) {
+    document.getElementById('modal-conn-title').textContent = 'Configurar — ' + label;
+    document.getElementById('modal-conn').classList.remove('hidden');
+}
+function toggleConnector(id, active) {
+    console.log('Connector', id, active ? 'enabled' : 'disabled');
+}
+</script>
+}

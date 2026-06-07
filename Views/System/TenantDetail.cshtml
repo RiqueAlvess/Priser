@@ -1,0 +1,308 @@
+@using Priser.Models.Entities
+@{
+    ViewBag.Title = "Tenant — Priser System";
+    var tenant = ViewBag.Tenant as Tenant;
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var recentRecs = ViewBag.RecentRecs as List<Recognition> ?? new List<Recognition>();
+    var auditLogs = ViewBag.AuditLogs as List<AuditLog> ?? new List<AuditLog>();
+    if (tenant == null) return;
+
+    string PlanBadge(string plan) => plan.ToLower() switch
+    {
+        "enterprise" => "bg-purple-100 text-purple-700",
+        "business"   => "bg-blue-100 text-blue-700",
+        "growth"     => "bg-indigo-100 text-indigo-700",
+        "starter"    => "bg-gray-100 text-gray-600",
+        _            => "bg-yellow-100 text-yellow-700",
+    };
+}
+
+<div class="mb-6">
+    <a href="/system/tenants" class="text-sm text-secondary hover:underline flex items-center gap-1 mb-3">
+        <span class="ms text-[16px]">arrow_back</span> Voltar para Tenants
+    </a>
+    <div class="flex items-center gap-4">
+        @if (!string.IsNullOrWhiteSpace(tenant.LogoUrl))
+        {
+            <img src="@tenant.LogoUrl" alt="@tenant.Name" class="w-14 h-14 rounded-xl object-contain bg-white border border-outline-variant p-1" />
+        }
+        else
+        {
+            <div class="w-14 h-14 rounded-xl bg-primary-container text-white flex items-center justify-center text-xl font-bold">@tenant.Name[0].ToString().ToUpper()</div>
+        }
+        <div>
+            <h1 class="text-3xl font-bold text-primary-container">@tenant.Name</h1>
+            <p class="text-on-surface-variant text-sm">@(tenant.Slug).prizer.com</p>
+        </div>
+        <div class="ml-auto flex items-center gap-3">
+            <span class="text-xs font-semibold px-3 py-1.5 rounded-full capitalize @PlanBadge(tenant.BillingPlan)">@tenant.BillingPlan</span>
+            @if (tenant.Status == "active")
+            {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full bg-green-100 text-green-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> ativo
+                </span>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full bg-red-100 text-red-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> suspenso
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Stats rápidas -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Usuários</p>
+        <p class="text-2xl font-bold text-primary-container">@users.Count(u => u.Status == "active")</p>
+        <p class="text-xs text-on-surface-variant">@users.Count(u => u.Status != "active") inativos</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Reconhecimentos</p>
+        <p class="text-2xl font-bold text-primary-container">@recentRecs.Count</p>
+        <p class="text-xs text-on-surface-variant">últimos registrados</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Plano</p>
+        <p class="text-2xl font-bold text-primary-container capitalize">@tenant.BillingPlan</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Criado em</p>
+        <p class="text-2xl font-bold text-primary-container">@tenant.CreatedAt.ToString("MM/yyyy")</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Ações -->
+    <section class="card p-6 xl:col-span-1 space-y-3">
+        <h2 class="text-lg font-bold text-primary-container mb-2">Ações</h2>
+
+        <button onclick="document.getElementById('modal-edit').classList.remove('hidden')"
+                class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors text-left">
+            <span class="ms text-secondary">edit</span>
+            <div>
+                <p class="text-sm font-semibold text-primary-container">Editar dados</p>
+                <p class="text-xs text-on-surface-variant">Nome, slug, logo, cores</p>
+            </div>
+        </button>
+
+        <button onclick="document.getElementById('modal-plan').classList.remove('hidden')"
+                class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors text-left">
+            <span class="ms text-secondary">layers</span>
+            <div>
+                <p class="text-sm font-semibold text-primary-container">Alterar plano</p>
+                <p class="text-xs text-on-surface-variant">Upgrade ou downgrade</p>
+            </div>
+        </button>
+
+        <button onclick="document.getElementById('modal-credits').classList.remove('hidden')"
+                class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors text-left">
+            <span class="ms text-secondary">toll</span>
+            <div>
+                <p class="text-sm font-semibold text-primary-container">Emitir créditos</p>
+                <p class="text-xs text-on-surface-variant">Adicionar pontos manualmente</p>
+            </div>
+        </button>
+
+        <a href="/system/support" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors">
+            <span class="ms text-secondary">support_agent</span>
+            <div>
+                <p class="text-sm font-semibold text-primary-container">Impersonar Admin</p>
+                <p class="text-xs text-on-surface-variant">Acesso via Suporte</p>
+            </div>
+        </a>
+
+        <div class="pt-3 border-t border-outline-variant">
+            <form method="post" action="/system/tenants/@tenant.Id/status">
+                @Html.AntiForgeryToken()
+                <button type="submit"
+                        class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors text-left"
+                        onclick="return confirm('@(tenant.Status == "active" ? "Suspender" : "Ativar") @tenant.Name?')">
+                    <span class="ms @(tenant.Status == "active" ? "text-error" : "text-green-600")">@(tenant.Status == "active" ? "block" : "check_circle")</span>
+                    <div>
+                        <p class="text-sm font-semibold @(tenant.Status == "active" ? "text-error" : "text-green-700")">
+                            @(tenant.Status == "active" ? "Suspender tenant" : "Ativar tenant")
+                        </p>
+                        <p class="text-xs text-on-surface-variant">@(tenant.Status == "active" ? "Bloqueia todos os acessos" : "Restaura acesso dos usuários")</p>
+                    </div>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Usuários -->
+    <section class="card p-6 xl:col-span-2">
+        <h2 class="text-lg font-bold text-primary-container mb-4">Usuários (@users.Count)</h2>
+        <div class="overflow-x-auto max-h-72 overflow-y-auto">
+            <table class="w-full text-sm">
+                <thead class="sticky top-0 bg-surface-container-low">
+                    <tr class="text-xs text-on-surface-variant uppercase tracking-wide">
+                        <th class="text-left px-3 py-2">Nome</th>
+                        <th class="text-left px-3 py-2">Email</th>
+                        <th class="text-left px-3 py-2">Role</th>
+                        <th class="text-left px-3 py-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant">
+                    @foreach (var u in users)
+                    {
+                        var roles = u.UserRoles?.Select(ur => ur.Role?.Name).Where(r => r != null).ToList() ?? new List<string?>();
+                        <tr class="hover:bg-surface-container-low">
+                            <td class="px-3 py-2.5 font-semibold text-primary-container">@u.FullName</td>
+                            <td class="px-3 py-2.5 text-on-surface-variant text-xs">@u.Email</td>
+                            <td class="px-3 py-2.5">
+                                @foreach (var r in roles)
+                                {
+                                    <span class="text-xs bg-surface-container px-1.5 py-0.5 rounded">@r</span>
+                                }
+                            </td>
+                            <td class="px-3 py-2.5">
+                                @if (u.Status == "active")
+                                {
+                                    <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                                }
+                                else
+                                {
+                                    <span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Log de auditoria do tenant -->
+<section class="card p-6 mt-6">
+    <h2 class="text-lg font-bold text-primary-container mb-4">Auditoria do tenant</h2>
+    @if (auditLogs.Any())
+    {
+        <div class="space-y-2">
+            @foreach (var log in auditLogs)
+            {
+                <div class="flex items-start gap-3 py-2 border-b border-outline-variant last:border-0">
+                    <span class="ms text-[16px] text-on-surface-variant mt-0.5">bolt</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-primary-container">@log.Action <span class="font-normal text-on-surface-variant">— @log.EntityType</span></p>
+                        @if (!string.IsNullOrWhiteSpace(log.NewValue))
+                        {
+                            <p class="text-xs text-on-surface-variant">@log.NewValue</p>
+                        }
+                    </div>
+                    <span class="text-xs text-on-surface-variant">@log.CreatedAt.ToString("dd/MM HH:mm")</span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-on-surface-variant text-sm">Nenhuma atividade registrada para este tenant.</p>
+    }
+</section>
+
+<!-- Modal: Editar -->
+<div id="modal-edit" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Editar dados do tenant</h3>
+            <button onclick="document.getElementById('modal-edit').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <form method="post" action="/system/tenants/@tenant.Id/edit" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Nome *</label>
+                <input name="name" value="@tenant.Name" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Logo URL</label>
+                <input name="logoUrl" value="@tenant.LogoUrl" type="url" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor primária</label>
+                    <input name="primaryColor" value="@tenant.PrimaryColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1.5">Cor destaque</label>
+                    <input name="accentColor" value="@tenant.AccentColor" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-edit').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Alterar Plano -->
+<div id="modal-plan" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Alterar plano</h3>
+            <button onclick="document.getElementById('modal-plan').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <form method="post" action="/system/tenants/@tenant.Id/edit" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="name" value="@tenant.Name" />
+            <div>
+                <label class="block text-sm font-semibold mb-2">Novo plano</label>
+                <div class="space-y-2">
+                    @foreach (var (plan, price) in new[] { ("trial","$0"), ("starter","$99/mês"), ("growth","$299/mês"), ("business","$799/mês"), ("enterprise","$1.999/mês") })
+                    {
+                        <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer @(tenant.BillingPlan == plan ? "border-secondary bg-blue-50" : "border-outline-variant") hover:border-secondary">
+                            <input type="radio" name="billingPlan" value="@plan" @(tenant.BillingPlan == plan ? "checked" : "") class="accent-secondary" />
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold capitalize text-primary-container">@plan</p>
+                            </div>
+                            <span class="text-xs text-on-surface-variant">@price</span>
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-plan').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Emitir Créditos -->
+<div id="modal-credits" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-primary-container">Emitir créditos</h3>
+            <button onclick="document.getElementById('modal-credits').classList.add('hidden')" class="p-2 hover:bg-surface-container rounded-lg"><span class="ms">close</span></button>
+        </div>
+        <form method="post" action="/system/billing/emit-credits" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="tenantId" value="@tenant.Id" />
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Usuário destinatário *</label>
+                <select name="userId" required class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary">
+                    @foreach (var u in users.Where(u => u.Status == "active"))
+                    {
+                        <option value="@u.Id">@u.FullName (@u.Email)</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Quantidade de pontos *</label>
+                <input name="amount" type="number" min="1" step="1" required placeholder="Ex: 500" class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1.5">Motivo obrigatório *</label>
+                <textarea name="reason" required rows="2" placeholder="Ex: Compensação por falha de sistema..." class="w-full border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-secondary resize-none"></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('modal-credits').classList.add('hidden')" class="btn-outline flex-1">Cancelar</button>
+                <button type="submit" class="btn-primary flex-1">Emitir</button>
+            </div>
+        </form>
+    </div>
+</div>
