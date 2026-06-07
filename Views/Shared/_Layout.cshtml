@@ -113,10 +113,8 @@
         <nav class="flex-1 px-3 space-y-1">
             @if (User.IsInRole("SystemAdmin"))
             {
-                @{
-                    var sysAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
-                    bool IsSysActive(string a) => sysAction.Equals(a, StringComparison.OrdinalIgnoreCase);
-                }
+                var sysAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+                Func<string, bool> IsSysActive = a => sysAction.Equals(a, StringComparison.OrdinalIgnoreCase);
                 <p class="px-4 text-xs text-white/40 uppercase tracking-wider mb-1">Visão Geral</p>
                 <a href="/system" class="sidebar-link @(IsSysActive("Index") ? "active" : "")">
                     <span class="ms">dashboard</span> Dashboard
